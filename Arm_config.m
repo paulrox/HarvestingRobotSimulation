@@ -35,3 +35,19 @@ qn = [0 0 qn];
 
 robot.plotopt = {'workspace' [-3 3 -3 3 -4 2] 'scale' 0.5, 'jvec'};
 robot.plot(qn);
+
+%% Task Objects
+
+% Fruit tree object
+Xtree = [3 3 -3 -3];
+Ytree = [-3 -3 -3 -3];
+Ztree = [-4 2 2 -4];
+%fruit_tree = [3 -3 -4; 3 -3 2; -3 -3 2; -3 -3 -4];
+fruit_tree = [Xtree; Ytree; Ztree]
+
+% Fruit
+C_fruit = [0; -3; 0]
+R_fruit = 0.15;
+
+plot_poly(fruit_tree, 'fill', 'g');
+plot_sphere(C_fruit, R_fruit, 'color', 'r');
