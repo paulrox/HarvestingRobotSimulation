@@ -33,8 +33,36 @@ robot = SerialLink([platform arm], 'name', 'robot');
 
 qn = [0 0 qn];
 
+%% Inverse Differential Kinematics
+
+dt = 1;
+test_T0 = robot.fkine(qn);
+test_T1 = trotx(-pi/2) * transl(3, 0, 0);
+test_traj = ctraj(test_T0, test_T1, 20);
+
+test_v = zeros(6,1,20);
+for i = 1:19
+    test_v(:,:,i+1) = (tr2delta(test_traj(:,:,i), test_traj(:,:,i+1)))/dt;
+end;
+
+qd = struct;
+q = struct;
+
+% No null space optimization
+
+qd.no_opt = zeros(1,8,20);
+q.no_opt = zeros(21,8);
+q.no_opt(1,:) = qn;
+for i = 1:20
+    J = jacob0(robot, qd.no_opt(:,:,i));
+    qd.no_opt(:,:,i) = pinv(J)*test_v(:,:,i);
+    q.no_opt(i+1,:) = q.no_opt(i,:) + qd.no_opt(:,:,i)*dt; 
+end;
+
+%% Plot the robot
+
 robot.plotopt = {'workspace' [-3 3 -3 3 -4 2] 'scale' 0.5, 'jvec'};
-robot.plot(qn);
+robot.plot(q.no_opt);
 
 %% Task Objects
 
