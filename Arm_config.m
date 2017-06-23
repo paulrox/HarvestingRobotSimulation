@@ -27,7 +27,7 @@ P2 = Link('theta',-pi/2, 'a', 1.5, 'alpha', 0);
 platform = SerialLink([P1 P2], 'name', 'platform');
 platform.base = trotx(pi/2);
 
-robot = SerialLink([platform arm], 'name', 'robot');
+h_robot = SerialLink([platform arm], 'name', 'h_robot');
 
 %figure;
 
@@ -36,7 +36,7 @@ qn = [0 0 qn];
 %% Inverse Differential Kinematics
 
 dt = 1;
-test_T0 = robot.fkine(qn);
+test_T0 = h_robot.fkine(qn);
 test_T1 = trotx(-pi/2) * transl(3, 0, 0);
 test_traj = ctraj(test_T0, test_T1, 20);
 
@@ -48,21 +48,24 @@ end;
 qd = struct;
 q = struct;
 
-% No null space optimization
+% null space optimization
 
 qd.no_opt = zeros(1,8,20);
 q.no_opt = zeros(21,8);
 q.no_opt(1,:) = qn;
+
 for i = 1:20
-    J = jacob0(robot, qd.no_opt(:,:,i));
-    qd.no_opt(:,:,i) = pinv(J)*test_v(:,:,i);
+    J = jacob0(h_robot, qd.no_opt(:,:,i));
+    % q0 = null_opt(h_robot, 'manip', q.no_opt(i,:));
+    q0 = [0 0 10 10 10 10 10 10]; 
+    qd.no_opt(:,:,i) = pinv(J)*test_v(:,:,i) + (eye(8) - pinv(J)*J)*q0';
     q.no_opt(i+1,:) = q.no_opt(i,:) + qd.no_opt(:,:,i)*dt; 
 end;
 
 %% Plot the robot
 
-robot.plotopt = {'workspace' [-3 3 -3 3 -4 2] 'scale' 0.5, 'jvec'};
-robot.plot(q.no_opt);
+h_robot.plotopt = {'workspace' [-3 3 -3 3 -4 2] 'scale' 0.5, 'jvec'};
+h_robot.plot(q.no_opt);
 
 %% Task Objects
 
