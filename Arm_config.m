@@ -39,15 +39,52 @@ robot.plot(qn);
 %% Task Objects
 
 % Fruit tree object
-Xtree = [3 3 -3 -3];
-Ytree = [-3 -3 -3 -3];
+Xtree = [-3 -3 -3 -3];
+Ytree = [-3 -3 3 3];
 Ztree = [-4 2 2 -4];
 %fruit_tree = [3 -3 -4; 3 -3 2; -3 -3 2; -3 -3 -4];
+%fruit_tree = [-3 -3 -4; -3 -3 2; -3 3 2; -3 3 -4];
 fruit_tree = [Xtree; Ytree; Ztree]
 
 % Fruit
-C_fruit = [0; -3; 0]
+C_fruit = [-3; 0; 0.5]
 R_fruit = 0.15;
 
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(C_fruit, R_fruit, 'color', 'r');
+
+%% Building a trajectory
+N = 20;
+dt = 2;
+T0 = robot.fkine(qn);
+T1 = transl(1, 0, 2);
+TC = ctraj(T0, T1, N);
+pi = [];
+pi_next = [];
+ve = [];
+
+for i = 1: (N - 1)
+    tmp = TC(:, :, i);
+    tmp = tmp(:, 4);
+    for j = 1: 3
+        pi(j, :) = tmp(j, :);
+    end
+    
+    tmp = TC(:, :, i + 1);
+    tmp = tmp(:, 4);
+    for j = 1: 3
+        pi_next(j, :) = tmp(j, :);
+    end
+    
+    v = (pi_next - pi) / dt;
+    ve(i, :) = [v' 0 0 0];
+end
+
+J = jacob0(robot, qn);
+qdot = pinv(J) * ve';
+
+% Integration
+q(1,:) = qn;
+for i = 2: N
+    q(i, :) = q(i-1, :) + (qdot(:, i-1)*dt)';
+end
