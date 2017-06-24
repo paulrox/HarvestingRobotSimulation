@@ -126,3 +126,9 @@ end
 
 robot.plotopt = {'workspace' [-3 3 -3 3 -4 2] 'scale' 0.5, 'jvec'};
 robot.plot(no_opt.q);
+
+%% Workspace analysis
+qmin = [-180; -90; -230; -200; -120; -400]; 
+qmax = [180; 110; 50; 200; 120; 400];
+
+%%scatter = mcm(arm, qmin, qmax);
