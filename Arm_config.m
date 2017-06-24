@@ -61,15 +61,14 @@ T1 = transl(1, 0, 2) * robot.base;
 TC = ctraj(T0, T1, N);
 ve = [];
 
-for i = 1: (N - 1)
-    ve(i, :) = tr2delta(TC(:, :, i), TC(:, :, i+1)) / dt ;
-end
-
-J = jacob0(robot, qn);
-qdot = pinv(J) * ve';
-
-% Integration
 q(1,:) = qn;
-for i = 2: N
-    q(i, :) = q(i-1, :) + (qdot(:, i-1)*dt)';
+for i = 1: (N)
+    if (i ~= N)
+        ve(i, :) = tr2delta(TC(:, :, i), TC(:, :, i+1)) / dt;
+        J = jacob0(robot, q(i,:));
+        qdot(i, :) = pinv(J) * ve(i, :)'
+        q(i+1, :) = q(i, :) + (qdot(i, :)*dt);
+    end   
 end
+
+
