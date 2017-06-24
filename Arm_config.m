@@ -1,5 +1,5 @@
 %% Initialize the toolbox
-
+clear
 %close all;
 %clearvars;
 %startup_rvc;
@@ -54,30 +54,15 @@ plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(C_fruit, R_fruit, 'color', 'r');
 
 %% Building a trajectory
-N = 20;
+N = 100;
 dt = 2;
 T0 = robot.fkine(qn);
-T1 = transl(1, 0, 2);
+T1 = transl(1, 0, 2) * robot.base;
 TC = ctraj(T0, T1, N);
-pi = [];
-pi_next = [];
 ve = [];
 
 for i = 1: (N - 1)
-    tmp = TC(:, :, i);
-    tmp = tmp(:, 4);
-    for j = 1: 3
-        pi(j, :) = tmp(j, :);
-    end
-    
-    tmp = TC(:, :, i + 1);
-    tmp = tmp(:, 4);
-    for j = 1: 3
-        pi_next(j, :) = tmp(j, :);
-    end
-    
-    v = (pi_next - pi) / dt;
-    ve(i, :) = [v' 0 0 0];
+    ve(i, :) = tr2delta(TC(:, :, i), TC(:, :, i+1)) / dt ;
 end
 
 J = jacob0(robot, qn);
