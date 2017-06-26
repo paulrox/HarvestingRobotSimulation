@@ -1,7 +1,5 @@
-qmin = [-180; -90; -230; -200; -120; -400]; 
-qmax = [180; 110; 50; 200; 120; 400];
-qmin = [-20; -20; -20; -20; -20; -20]; 
-qmax = [20; 20; 20; 20; 20; 20];
+qmin = [-135; -45; 140; -170; 0; -170]; 
+qmax = [135; 170; 220; 170; 180; 170];
 i = 1;
 delta = 10;
 q1 = deg2rad(qmin(1, :));
@@ -21,7 +19,7 @@ q6max = deg2rad(qmax(6, :));
 end_mcm = 0;
 
 while end_mcm == 0;
-    q = [q1 q2 q3 q4 q5 q6];
+    q = [q1 q2 q3 q4 q5 q6]
     scatter(i, :) = transl(arm.fkine(q));
     i = i + 1;
     q1 = q1 + deg2rad(delta);
