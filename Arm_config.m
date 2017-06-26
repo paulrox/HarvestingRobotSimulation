@@ -131,4 +131,3 @@ robot.plot(no_opt.q);
 qmin = [-135; -45; 140; -170; 0; -170]; 
 qmax = [135; 170; 220; 170; 180; 170];
 
-scatter = mcm(arm, qmin, qmax);
