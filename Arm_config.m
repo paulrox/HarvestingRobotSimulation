@@ -61,7 +61,7 @@ task = cell(1, 1);
 
 % Reachable task
 task{1} = struct;
-task{1}.c_fruit = [1.5; -3; 0];
+task{1}.c_fruit = [-1.5; -2.5; 0];
 
 %% Building a trajectory
 
@@ -71,7 +71,7 @@ k0 = 0.015;
 T0 = robot.fkine(qn);
 for i = 1:size(task)
     T1 = transl(task{i}.c_fruit(1), task{i}.c_fruit(2), ...
-        task{i}.c_fruit(2)) * robot.base;
+        task{i}.c_fruit(3)) * robot.base;
     task{i}.TC = ctraj(T0, T1, N);
     task{i}.ve = zeros(N-1, 6);
     
@@ -124,7 +124,8 @@ robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
 robot.plot(task{1}.manip.q);
 
 %% Workspace analysis
-qmin = [-135; -45; 140; -170; 0; -170]; 
-qmax = [135; 170; 220; 170; 180; 170];
+qmin = [-90; -45; 140; -170; 0; -170]; 
+qmax = [90; 170; 220; 170; 180; 170];
+mcm;
 %mcm_script;
 
