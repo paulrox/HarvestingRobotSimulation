@@ -5,6 +5,9 @@
 
 %% Robot arm configuration
 
+% Loading cloud of workload points
+load('scatter.mat');
+
 % Arm links
 
 R1 = Link('d', -0.9, 'a', 0.188, 'alpha', -pi/2);
@@ -29,7 +32,11 @@ platform.base = trotx(pi/2);
 robot = SerialLink([platform arm], 'name', 'h_robot');
 
 % Joint limits
-robot.qlim = [-0.1 0.1;-0.1 0.1; -deg2rad(135) deg2rad(135); ...
+
+qmin = [-90; -45; 140; -170; 0; -170]; 
+qmax = [270; 170; 220; 170; 180; 170];
+
+robot.qlim = [-0.1 0.1;-0.1 0.1; -deg2rad(90) deg2rad(270); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
     -deg2rad(170) deg2rad(170)];
@@ -48,20 +55,26 @@ fruit_tree = [Xtree; Ytree; Ztree];
 R_fruit = 0.15;
 
 % Workspace limits
-min_x = -2.37;
-min_y = -2.7446;
-min_z = -3.4466;
+min_x = min(scatter(:,1));
+min_y = min(scatter(:,2));
+min_z = min(scatter(:,3));
 
-max_x = 2.7446;
-max_y = 2.7446;
-max_z = 0.7715;
+max_x = max(scatter(:,1));
+max_y = max(scatter(:,2));
+max_z = max(scatter(:,3));
 
-% Task definition
-task = cell(1, 1);
+% Tasks definition
+task = cell(1, 3);
 
 % Reachable task
 task{1} = struct;
-task{1}.c_fruit = [-1.5; -2.5; 0];
+task{1}.c_fruit = [-1.5; -1.5; 0];
+% Not Reachable tasks, reachable only using cart
+task{2} = struct;
+task{2}.c_fruit = [-1.5; -2.5; 0];
+task{3} = struct;
+task{3}.c_fruit = [-1.5; -1.5; 1.5];
+
 
 %% Building a trajectory
 
@@ -69,7 +82,8 @@ N = 200;
 dt = 1;
 k0 = 0.015;
 T0 = robot.fkine(qn);
-for i = 1:size(task)
+for i = 1:length(task)
+  
     T1 = transl(task{i}.c_fruit(1), task{i}.c_fruit(2), ...
         task{i}.c_fruit(3)) * robot.base;
     task{i}.TC = ctraj(T0, T1, N);
@@ -113,19 +127,50 @@ for i = 1:size(task)
             task{i}.ve(j,:)' + task{i}.manip.qns;
         task{i}.manip.q(j+1,:) = task{i}.manip.q(j,:) + ...
             (task{i}.manip.qdot(j,:)*dt);
+      
     end
 end
 
-%% Plot the robot
+%% Trajectory without cart considering joint limits
+N = 200;  
+T1 = transl(task{1}.c_fruit(1), task{i}.c_fruit(2), ...
+        task{i}.c_fruit(3)) * robot.base;
+TCR = ctraj(T0, T1, N);
+
+q_no_cart(1,:) = qn(3:8);
+for i = 2: N
+    q_no_cart(i,:) = arm.ikcon(TCR(:, :, i), q_no_cart(i-1,:));
+end
+
+    
+%% Plot the robot in its nominal position for a specific task
 
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
 robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
-robot.plot(task{1}.manip.q);
+robot.plot(qn);
+
+%% Plot the robot performing the task
+
+plot_poly(fruit_tree, 'fill', 'g');
+plot_sphere(task{3}.c_fruit, R_fruit, 'color', 'r');
+robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+robot.plot(task{3}.manip.q);
+
+%% Plot the robot performing the reachable task without cart 
+
+plot_poly(fruit_tree, 'fill', 'g');
+plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
+arm.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+arm.plot(q_no_cart)
 
 %% Workspace analysis
+
 qmin = [-90; -45; 140; -170; 0; -170]; 
-qmax = [90; 170; 220; 170; 180; 170];
-mcm;
-%mcm_script;
+qmax = [270; 170; 220; 170; 180; 170];
+%mcm;
+
+dela = delaunay(scatter(:,1), scatter(:,2), scatter(:,3));
+tsearchn(scatter, dela, [-1.5 -2.5 0])
+trisurf(dela, scatter(:,1),scatter(:,2), scatter(:,3))
 
