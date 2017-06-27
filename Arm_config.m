@@ -78,7 +78,7 @@ for i = 1:size(task)
     task{i}.ve = zeros(N-1, 6);
     
     task{i}.no_opt = struct;
-    task{i}.opt = cell(2,1);
+    task{i}.opt = cell(3,1);
     
     task{i}.no_opt.q = zeros(N, 8);
     task{i}.no_opt.q(1,:) = qn;
@@ -119,10 +119,10 @@ for i = 1:size(task)
                 k0 = 0.03;
                 disp('Optimizing distance from mechanical joint limits');
             otherwise
-                opt_name  = 'obstacle';
+                opt_name  = 'orient';
                 constraints = 'yes';
                 k0 = 0.03;
-                disp('Optimizing distance from obstacle');
+                disp('Optimizing orientation with task object');
         end
         
         for j = 1:(N-1)
@@ -130,7 +130,7 @@ for i = 1:size(task)
             J = robot.jacob0(task{i}.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
             task{i}.opt{k}.q0 = k0 * null_opt(robot, ...
-                opt_name, task{i}.no_opt.q(j,:), constraints);
+                opt_name, task{i}.no_opt.q(j,:), constraints, k0);
             qns = (eye(8) - Jpinv * J) * task{i}.opt{k}.q0';
             task{i}.opt{k}.qdot(j,:) = Jpinv * task{i}.ve(j,:)' + qns;
             task{i}.opt{k}.q(j+1,:) = task{i}.opt{k}.q(j,:) + ...
@@ -148,7 +148,7 @@ end
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
 robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
-robot.plot(task{1}.opt{2}.q);
+robot.plot(task{1}.opt{3}.q);
 
 %% Workspace analysis
 qmin = [-90; -45; 140; -170; 0; -170]; 
