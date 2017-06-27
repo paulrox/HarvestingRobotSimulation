@@ -29,7 +29,7 @@ platform.base = trotx(pi/2);
 robot = SerialLink([platform arm], 'name', 'h_robot');
 
 % Joint limits
-robot.qlim = [-0.1 0.1;-0.1 0.1; -deg2rad(135) deg2rad(135); ...
+robot.qlim = [-0.1 0.1;-0.1 0.1; deg2rad(90) deg2rad(270); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
     -deg2rad(170) deg2rad(170)];
@@ -63,57 +63,84 @@ task = cell(1, 1);
 task{1} = struct;
 task{1}.c_fruit = [-1.5; -2.5; 0];
 
-%% Building a trajectory
+%% Cartesian trajectories and inverse differential kinematics
 
 N = 200;
 dt = 1;
-k0 = 0.015;
 T0 = robot.fkine(qn);
+
 for i = 1:size(task)
+    disp(['************ TASK ' num2str(i) ' ************']);
+    disp('Computing Cartesian trajectory...');
     T1 = transl(task{i}.c_fruit(1), task{i}.c_fruit(2), ...
         task{i}.c_fruit(3)) * robot.base;
     task{i}.TC = ctraj(T0, T1, N);
     task{i}.ve = zeros(N-1, 6);
     
     task{i}.no_opt = struct;
-    task{i}.manip = struct;
+    task{i}.opt = cell(2,1);
     
     task{i}.no_opt.q = zeros(N, 8);
     task{i}.no_opt.q(1,:) = qn;
     task{i}.no_opt.qdot = zeros(N-1, 8);
     
-    task{i}.manip.q = zeros(N, 8);
-    task{i}.manip.q(1,:) = qn;
-    task{i}.manip.qdot = zeros(N-1, 8);
-    task{i}.manip.q0 = zeros(1,8);
-    task{i}.manip.qns = zeros(1,8);
-    
-    for j = 1: (N-1)
+    disp(['Computing inverse differential kinematics without null space'...
+        ' optimization']);
+    for j = 1:(N-1)
         task{i}.ve(j, :) = tr2delta(task{i}.TC(:, :, j), ...
             task{i}.TC(:, :, j+1)) / dt;
         
-        % No optimization jacobian and joint positions
+        % No null space optimization inverse differential kinematics
         task{i}.no_opt.J = robot.jacob0(task{i}.no_opt.q(j,:));
         task{i}.no_opt.Jpinv = task{i}.no_opt.J'*((task{i}.no_opt.J * ...
             task{i}.no_opt.J')^-1);
         task{i}.no_opt.qdot(j,:) = task{i}.no_opt.Jpinv * task{i}.ve(j,:)';
         task{i}.no_opt.q(j+1,:) = task{i}.no_opt.q(j,:) + ...
             (task{i}.no_opt.qdot(j,:)*dt);
-        
-        % Null space optimization - Manipulability
-        task{i}.manip.J = robot.jacob0(task{i}.manip.q(j,:));
-        task{i}.manip.Jpinv = task{i}.manip.J'*((task{i}.manip.J * ...
-            task{i}.manip.J')^-1);
-        task{i}.manip.q0 = k0*null_opt(robot, 'manip', ...
-            task{i}.no_opt.q(j,:), 'yes');
-        task{i}.manip.qns = (eye(8) - task{i}.manip.Jpinv * ...
-            task{i}.manip.J) * task{i}.manip.q0';
-        % manip.qns = (null(manip.J))*pinv(null(manip.J)) * manip.q0';
-        task{i}.manip.qdot(j,:) = task{i}.manip.Jpinv * ...
-            task{i}.ve(j,:)' + task{i}.manip.qns;
-        task{i}.manip.q(j+1,:) = task{i}.manip.q(j,:) + ...
-            (task{i}.manip.qdot(j,:)*dt);
     end
+    
+    disp('Null Space Optimization');
+    for k = 1:(size(task{i}.opt, 1))
+        task{i}.opt{k}.q = zeros(N,8);
+        task{i}.opt{k}.q(1,:) = qn;
+        task{i}.opt{k}.qdot = zeros(N-1,8);
+        task{i}.opt{k}.q0 = zeros(1,8);
+        qns = zeros(1,8);
+        
+        switch k
+            case 1
+                opt_name = 'manip';
+                constraints = 'yes';
+                k0 = 0.03;
+                disp('Optimizing manipulability');
+            case 2
+                opt_name = 'joint';
+                constraints = 'no';
+                k0 = 0.03;
+                disp('Optimizing distance from mechanical joint limits');
+            otherwise
+                opt_name  = 'obstacle';
+                constraints = 'yes';
+                k0 = 0.03;
+                disp('Optimizing distance from obstacle');
+        end
+        
+        for j = 1:(N-1)
+            % Null space optimization - Manipulability
+            J = robot.jacob0(task{i}.opt{k}.q(j,:));
+            Jpinv = J' * ((J * J')^-1);
+            task{i}.opt{k}.q0 = k0 * null_opt(robot, ...
+                opt_name, task{i}.no_opt.q(j,:), constraints);
+            qns = (eye(8) - Jpinv * J) * task{i}.opt{k}.q0';
+            task{i}.opt{k}.qdot(j,:) = Jpinv * task{i}.ve(j,:)' + qns;
+            task{i}.opt{k}.q(j+1,:) = task{i}.opt{k}.q(j,:) + ...
+                (task{i}.opt{k}.qdot(j,:) * dt);
+            % Check whether the joints are within the limits or not
+            check_jlim(robot, task{i}.opt{k}.q(j+1,:));
+        end
+    end
+    
+    disp('End of optimization phase');
 end
 
 %% Plot the robot
@@ -121,7 +148,7 @@ end
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
 robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
-robot.plot(task{1}.manip.q);
+robot.plot(task{1}.opt{2}.q);
 
 %% Workspace analysis
 qmin = [-90; -45; 140; -170; 0; -170]; 
