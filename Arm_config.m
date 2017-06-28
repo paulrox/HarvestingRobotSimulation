@@ -64,7 +64,7 @@ max_y = max(scatter(:,2));
 max_z = max(scatter(:,3));
 
 % Tasks definition
-task = cell(1, 3);
+task = cell(1, 1);
 
 % Reachable task
 task{1} = struct;
@@ -167,9 +167,27 @@ arm.plot(q_no_cart)
 %% Workspace analysis
 
 qmin = [-90; -45; 140; -170; 0; -170]; 
-qmax = [270; 170; 220; 170; 180; 170];
-%mcm;
+qmax = [270; 170; 180; 170; 180; 170];
+mcm3;
+%% Manipulability analysis
 
+h = histogram(work_manipl(:,1))
+%scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.')
+
+for (i = 1: length(work_manipl))
+    if work_manipl(i, :) == 0.0031
+        break
+    end
+end
+%%
+hold on
+for (i = 1: length(work_manipl))
+    if (work_manipl(i,1) < 0.5)
+        scatter3(scatter(i,1), scatter(i,2), scatter(i,3), '.', 'r') 
+    end
+end
+
+%%
 dela = delaunay(scatter(:,1), scatter(:,2), scatter(:,3));
 tsearchn(scatter, dela, [-1.5 -2.5 0])
 trisurf(dela, scatter(:,1),scatter(:,2), scatter(:,3))

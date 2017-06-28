@@ -1,7 +1,5 @@
-qmin = [-135; -45; 140; -170; 0; -170]; 
-qmax = [135; 170; 220; 170; 180; 170];
 i = 1;
-delta = 10;
+delta = 15;
 q1 = deg2rad(qmin(1, :));
 q2 = deg2rad(qmin(2, :));
 q3 = deg2rad(qmin(3, :));
@@ -21,6 +19,7 @@ end_mcm = 0;
 while end_mcm == 0;
     q = [q1 q2 q3 q4 q5 q6]
     scatter(i, :) = transl(arm.fkine(q));
+    work_manipl(i, :) = arm.maniplty(q);
     i = i + 1;
     q1 = q1 + deg2rad(delta);
     if (q1 > q1max)
