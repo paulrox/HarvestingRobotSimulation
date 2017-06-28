@@ -30,8 +30,8 @@ end
 if strcmp(con, 'yes')
     
 % Old constaints, they consider q0
-    lb = r.qlim(:, 1)'
-    ub = r.qlim(:, 2)'
+    lb = r.qlim(:, 1)';
+    ub = r.qlim(:, 2)';
 
 %     J = r.jacob0(q_k);
 %     Jpinv = J' * ((J * J')^-1);
