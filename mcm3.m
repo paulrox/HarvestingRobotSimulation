@@ -13,6 +13,8 @@ end_mcm = 0;
 while end_mcm == 0;
     q = [q1 q2 q3 0 0 0]
     scatter(i, :) = transl(arm.fkine(q));
+    work_manipl(i, :) = arm.maniplty(q);
+    q_man(i, :) = q;
     i = i + 1;
     q1 = q1 + deg2rad(delta);
     if (q1 > q1max)

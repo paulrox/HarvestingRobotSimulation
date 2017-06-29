@@ -125,3 +125,29 @@ for i = 1 : size(task)
    
     
 end
+
+%% Manipulability analysis
+
+h = histogram(work_manipl(:,1));
+
+
+for i = 1: length(work_manipl)
+    if work_manipl(i, :) == 0.0031
+        break
+    end
+end
+
+%%
+
+scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.')
+hold on
+for i = 1: length(work_manipl)
+    if (work_manipl(i,1) < 0.5)
+        scatter3(scatter(i,1), scatter(i,2), scatter(i,3), '.', 'r');
+    end
+end
+
+%%
+dela = delaunay(scatter(:,1), scatter(:,2), scatter(:,3));
+tsearchn(scatter, dela, [-1.5 -2.5 0])
+trisurf(dela, scatter(:,1),scatter(:,2), scatter(:,3))

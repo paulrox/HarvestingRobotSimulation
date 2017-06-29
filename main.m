@@ -48,20 +48,25 @@ fruit_tree = [Xtree; Ytree; Ztree];
 R_fruit = 0.15;
 
 % Workspace limits
-min_x = -2.37;
-min_y = -2.7446;
-min_z = -3.4466;
+min_x = min(scatter(:,1));
+min_y = min(scatter(:,2));
+min_z = min(scatter(:,3));
 
-max_x = 2.7446;
-max_y = 2.7446;
-max_z = 0.7715;
+max_x = max(scatter(:,1));
+max_y = max(scatter(:,2));
+max_z = max(scatter(:,3));
 
-% Task definition
-task = cell(1, 1);
+% Tasks definition
+task = cell(1, 3);
 
 % Reachable task
 task{1} = struct;
-task{1}.c_fruit = [-1.5; -2.5; 0];
+task{1}.c_fruit = [-1.5; -1.5; 0];
+% Not Reachable tasks, reachable only using cart
+task{2} = struct;
+task{2}.c_fruit = [-1.5; -2.5; 0];
+task{3} = struct;
+task{3}.c_fruit = [-1.5; -1.5; 1.5];
 
 %% Cartesian trajectories and inverse differential kinematics
 
@@ -187,20 +192,44 @@ for i = 1 : size(task)
     disp('End of optimization phase');
 end
 
-%% Plot the robot
+%% Trajectory without cart considering joint limits
+N = 200;  
+T1 = transl(task{1}.c_fruit(1), task{i}.c_fruit(2), ...
+        task{i}.c_fruit(3)) * robot.base;
+TCR = ctraj(T0, T1, N);
+
+q_no_cart(1,:) = qn(3:8);
+for i = 2: N
+    q_no_cart(i,:) = arm.ikcon(TCR(:, :, i), q_no_cart(i-1,:));
+end
+
+%% Plot the robot in its nominal position for a specific task
 
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
 robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
-robot.plot(task{1}.clik.opt{1}.q);
+robot.plot(qn);
+
+%% Plot the robot performing the task
+
+plot_poly(fruit_tree, 'fill', 'g');
+plot_sphere(task{3}.c_fruit, R_fruit, 'color', 'r');
+robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+robot.plot(task{3}.ik.opt{1}.q);
+
+%% Plot the robot performing the reachable task without cart 
+
+plot_poly(fruit_tree, 'fill', 'g');
+plot_sphere(task{1}.c_fruit, R_fruit, 'color', 'r');
+arm.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+arm.plot(q_no_cart);
 
 %% Workspace analysis
+
 qmin = [-90; -45; 140; -170; 0; -170]; 
-qmax = [90; 170; 220; 170; 180; 170];
-mcm;
-%mcm_script;
+qmax = [270; 170; 180; 170; 180; 170];
+mcm3;
 
 %% Generate and save the plots
 
 generate_plots;
-
