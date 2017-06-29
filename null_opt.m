@@ -17,7 +17,7 @@ if strcmp(type, 'manip')
 elseif strcmp(type, 'joint')
     % Distance from mechanical joint limits
     j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
-    obj_f = @(x) (1 / r.n) * sumsqr((x - j_mid) ./ (r.qlim(:,2) - ...
+    obj_f = @(x) (1 / r.n) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
         r.qlim(:,1)));
 elseif strcmp(type, 'orient')
     % Orientation with the task object

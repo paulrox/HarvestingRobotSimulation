@@ -1,7 +1,6 @@
 %% Initialize the toolbox
 close all;
 clearvars;
-clear
 startup_rvc;
 
 load('scatter.mat');
@@ -32,14 +31,16 @@ platform.base = trotx(pi/2);
 robot = SerialLink([platform arm], 'name', 'h_robot');
 
 % Joint limits
-robot.qlim = [-1 1;-1 1; deg2rad(90) deg2rad(270); ...
+robot.qlim = [-1 1;-1 1; deg2rad(110) deg2rad(250); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
-    -deg2rad(170) deg2rad(170)];
- arm.qlim = [ deg2rad(0) deg2rad(180); ...
+    -deg2rad(360) -deg2rad(270);
+     ];
+ arm.qlim = [ deg2rad(20) deg2rad(160); ...
      -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
-     -deg2rad(170) deg2rad(170);  -deg2rad(360) -deg2rad(270);...
-     deg2rad(0) deg2rad(180)];
+     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180);...
+     -deg2rad(360) -deg2rad(270);
+     ];
 %-360 -270
 %% Task Objects
 
@@ -76,9 +77,9 @@ task{3}.c_fruit = [-1.5; -1.5; 1.5];
 %% Cartesian trajectories and inverse differential kinematics
 
 N = 200;
-dt = 1;
+dt = 0.01;
 T0 = robot.fkine(qn);
-num_opt = 1; % Number of optimizations actually in use
+num_opt = 3; % Number of optimizations actually in use
 
 for i = 1 : length(task)
     disp(['************ TASK ' num2str(i) ' ************']);
@@ -134,6 +135,7 @@ end
 %% Differential IK and CLIK with null space optimizations
 
 for i = 1 : length(task)
+    disp(['************ TASK ' num2str(i) ' ************']);
     disp('Null Space Optimizations');
     for k = 1 : num_opt
         task{i}.ik.opt{k}.q = zeros(N,8);
@@ -148,20 +150,20 @@ for i = 1 : length(task)
         qns = zeros(1,8);
         
         switch k
-            case 1
+            case 2
                 opt_name = 'manip';
                 constraints = 'no';
-                k0 = 0.03;
+                k0 = 1;
                 disp('Optimizing manipulability');
-            case 2
+            case 1
                 opt_name = 'joint';
                 constraints = 'no';
-                k0 = 0.03;
+                k0 = 1;
                 disp('Optimizing distance from mechanical joint limits');
             otherwise
                 opt_name  = 'orient';
-                constraints = 'yes';
-                k0 = 0.03;
+                constraints = 'no';
+                k0 = 1;
                 disp('Optimizing orientation with task object');
         end
         
@@ -218,10 +220,10 @@ robot.plot(qn);
 %% Plot the robot performing the task
 
 plot_poly(fruit_tree, 'fill', 'g');
-plot_sphere(task{3}.c_fruit, R_fruit, 'color', 'r');
+plot_sphere(task{2}.c_fruit, R_fruit, 'color', 'r');
 robot.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
-robot.plot(task{3}.ik.opt{1}.q);
-
+robot.plot(task{2}.ik.no_opt.q);
+%robot.plot(task{2}.ik.opt{3}.q);
 %% Plot the robot performing the reachable task without cart 
 
 plot_poly(fruit_tree, 'fill', 'g');
