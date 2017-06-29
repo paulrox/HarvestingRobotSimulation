@@ -140,6 +140,7 @@ end
 %%
 
 scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.')
+%%
 hold on
 for i = 1: length(work_manipl)
     if (work_manipl(i,1) < 0.5)

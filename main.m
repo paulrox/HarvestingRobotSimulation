@@ -1,8 +1,10 @@
 %% Initialize the toolbox
-%close all;
-%clearvars;
-%startup_rvc;
+close all;
+clearvars;
+clear
+startup_rvc;
 
+load('scatter.mat');
 %% Robot arm configuration
 
 % Arm links
@@ -16,7 +18,7 @@ R6 = Link('d', -0.2, 'a', 0, 'alpha', -pi/2);
 
 arm = SerialLink([R1 R2 R3 R4 R5 R6], 'name', 'arm');
 
-qn = [pi 0.7854 3.1416 0 0.7854 0];
+qn = [0 0 3.1416 0.7854 3.1416 0 1.5708 -4.7124];
 
 % Platform links
 
@@ -26,6 +28,7 @@ P2 = Link('theta',-pi/2, 'a', 1.5, 'alpha', 0);
 platform = SerialLink([P1 P2], 'name', 'platform');
 platform.base = trotx(pi/2);
 
+
 robot = SerialLink([platform arm], 'name', 'h_robot');
 
 % Joint limits
@@ -33,9 +36,11 @@ robot.qlim = [-1 1;-1 1; deg2rad(90) deg2rad(270); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
     -deg2rad(170) deg2rad(170)];
-
-qn = [0 0 qn];
-
+ arm.qlim = [ deg2rad(0) deg2rad(180); ...
+     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
+     -deg2rad(170) deg2rad(170);  -deg2rad(360) -deg2rad(270);...
+     deg2rad(0) deg2rad(180)];
+%-360 -270
 %% Task Objects
 
 % Fruit tree object
@@ -75,7 +80,7 @@ dt = 1;
 T0 = robot.fkine(qn);
 num_opt = 1; % Number of optimizations actually in use
 
-for i = 1 : size(task)
+for i = 1 : length(task)
     disp(['************ TASK ' num2str(i) ' ************']);
     disp('Computing Cartesian trajectory...');
     T1 = transl(task{i}.c_fruit(1), task{i}.c_fruit(2), ...
@@ -128,7 +133,7 @@ end
 
 %% Differential IK and CLIK with null space optimizations
 
-for i = 1 : size(task)
+for i = 1 : length(task)
     disp('Null Space Optimizations');
     for k = 1 : num_opt
         task{i}.ik.opt{k}.q = zeros(N,8);
@@ -194,8 +199,8 @@ end
 
 %% Trajectory without cart considering joint limits
 N = 200;  
-T1 = transl(task{1}.c_fruit(1), task{i}.c_fruit(2), ...
-        task{i}.c_fruit(3)) * robot.base;
+T1 = transl(task{1}.c_fruit(1), task{1}.c_fruit(2), ...
+        task{1}.c_fruit(3)) * robot.base;
 TCR = ctraj(T0, T1, N);
 
 q_no_cart(1,:) = qn(3:8);
@@ -226,10 +231,18 @@ arm.plot(q_no_cart);
 
 %% Workspace analysis
 
-qmin = [-90; -45; 140; -170; 0; -170]; 
-qmax = [270; 170; 180; 170; 180; 170];
+qmin = [20; -45; 140; -170; 0; -360]; 
+qmax = [160; 170; 180; 170; 180; 270];
 mcm3;
 
 %% Generate and save the plots
 
 generate_plots;
+
+%%
+hold on
+for i = 1: length(scatter)
+    if (scatter(i,2) >= 2.5728)
+        break
+    end
+end
