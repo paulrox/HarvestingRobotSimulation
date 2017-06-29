@@ -34,14 +34,12 @@ robot = SerialLink([platform arm], 'name', 'h_robot');
 robot.qlim = [-1 1;-1 1; deg2rad(110) deg2rad(250); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
-    -deg2rad(360) -deg2rad(270);
-     ];
+    -deg2rad(360) -deg2rad(270)];
  arm.qlim = [ deg2rad(20) deg2rad(160); ...
      -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
      -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180);...
-     -deg2rad(360) -deg2rad(270);
-     ];
-%-360 -270
+     -deg2rad(360) -deg2rad(270)];
+
 %% Task Objects
 
 % Fruit tree object
@@ -82,7 +80,7 @@ T0 = robot.fkine(qn);
 num_opt = 3; % Number of optimizations actually in use
 
 for i = 1 : length(task)
-    disp(['************ TASK ' num2str(i) ' ************']);
+    disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
     disp('Computing Cartesian trajectory...');
     T1 = transl(task{i}.c_fruit(1), task{i}.c_fruit(2), ...
         task{i}.c_fruit(3))* trotz(-pi/2) * robot.base;
@@ -135,7 +133,7 @@ end
 %% Differential IK and CLIK with null space optimizations
 
 for i = 1 : length(task)
-    disp(['************ TASK ' num2str(i) ' ************']);
+    disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
     disp('Null Space Optimizations');
     for k = 1 : num_opt
         task{i}.ik.opt{k}.q = zeros(N,8);
@@ -150,16 +148,16 @@ for i = 1 : length(task)
         qns = zeros(1,8);
         
         switch k
-            case 2
-                opt_name = 'manip';
-                constraints = 'no';
-                k0 = 1;
-                disp('Optimizing manipulability');
             case 1
                 opt_name = 'joint';
                 constraints = 'no';
                 k0 = 1;
                 disp('Optimizing distance from mechanical joint limits');
+            case 2
+                opt_name = 'manip';
+                constraints = 'no';
+                k0 = 1;
+                disp('Optimizing manipulability');
             otherwise
                 opt_name  = 'orient';
                 constraints = 'no';
@@ -209,6 +207,10 @@ q_no_cart(1,:) = qn(3:8);
 for i = 2: N
     q_no_cart(i,:) = arm.ikcon(TCR(:, :, i), q_no_cart(i-1,:));
 end
+
+%% Place phase
+
+place;
 
 %% Plot the robot in its nominal position for a specific task
 
