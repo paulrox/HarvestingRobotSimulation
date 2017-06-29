@@ -64,7 +64,7 @@ max_y = max(scatter(:,2));
 max_z = max(scatter(:,3));
 
 % Tasks definition
-task = cell(1, 1);
+task = cell(1, 3);
 
 % Reachable task
 task{1} = struct;
@@ -172,7 +172,7 @@ mcm3;
 %% Manipulability analysis
 
 h = histogram(work_manipl(:,1))
-%scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.')
+
 
 for (i = 1: length(work_manipl))
     if work_manipl(i, :) == 0.0031
@@ -180,6 +180,7 @@ for (i = 1: length(work_manipl))
     end
 end
 %%
+scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.')
 hold on
 for (i = 1: length(work_manipl))
     if (work_manipl(i,1) < 0.5)
