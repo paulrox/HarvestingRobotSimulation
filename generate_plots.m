@@ -1,9 +1,11 @@
 %% Generates and saves the plots needed for the project report
 
-% Check if the 'plots/' directory exists
+% Check if 'figs/' and its subdirectories exist
 if exist('figs', 'dir') ~= 7
     mkdir('figs');
 end
+
+gen_pdf = 'no';
 
 path = [pwd '/figs/'];
 
@@ -22,7 +24,9 @@ for i = 1 : length(pick)
     xlabel('Time Steps');
     ylabel('Distance [m]');
     savefig(fig, [path 'pick' num2str(i) '_traj_pos']);
-    saveas(fig, [path 'pick' num2str(i) '_traj_pos'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_traj_pos'], 'pdf');
+    end
     close;
     
     % Rotation trajectory (RPY angles)
@@ -36,7 +40,9 @@ for i = 1 : length(pick)
     xlabel('Time Steps');
     ylabel('RPY angles [rad]');
     savefig(fig, [path 'pick' num2str(i) '_traj_rot']);
-    saveas(fig, [path 'pick' num2str(i) '_traj_rot'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_traj_rot'], 'pdf');
+    end
     close;
 end
 
@@ -55,7 +61,9 @@ for i = 1 : length(place)
     xlabel('Time Steps');
     ylabel('Distance [m]');
     savefig(fig, [path 'place' num2str(i) '_traj_pos']);
-    saveas(fig, [path 'place' num2str(i) '_traj_pos'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_traj_pos'], 'pdf');
+    end
     close;
     
     % Rotation trajectory (RPY angles)
@@ -69,8 +77,186 @@ for i = 1 : length(place)
     xlabel('Time Steps');
     ylabel('RPY angles [rad]');
     savefig(fig, [path 'place' num2str(i) '_traj_rot']);
-    saveas(fig, [path 'place' num2str(i) '_traj_rot'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_traj_rot'], 'pdf');
+    end
     close;
+end
+
+%% Trajectory Error IK (Pick Phase)
+
+for i = 1 : length(pick)
+    
+    % Forward kinematics trajectory (from IK)
+    fig = openfig([path 'pick' num2str(i) '_traj_pos']);
+    hold on;
+    
+    P = transl(robot.fkine(pick{i}.ik.no_opt.q(:,:)));
+    
+    plot(P);
+    hold off;
+    title(['Task ' num2str(i) ' - Pick - IK Transl. Trajectory Error']);
+    legend('Ideal x', 'Ideal y', 'Ideal z', 'IK x', ...
+        'IK y', 'IK z');
+    xlabel('Time Steps');
+    ylabel('Distance [m]');
+    savefig(fig, [path 'pick' num2str(i) '_trajVsik_pos']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_trajVsik_pos'], 'pdf');
+    end
+    close;
+    
+    % Rotation trajectory (RPY angles)
+%     fig = openfig([path 'pick' num2str(i) '_traj_rot']);
+%     hold on;
+%     
+%     R = tr2rpy(robot.fkine(pick{i}.ik.no_opt.q(:,:)));
+%     
+%     plot(R);
+%     hold off;
+%     title(['Task ' num2str(i) ' - Pick - IK Rot. Trajectory Error']);
+%     legend('Ideal roll', 'Ideal pitch', 'Ideal yaw', 'IK roll', ...
+%         'IK pitch', 'IK yaw');
+%     xlabel('Time Steps');
+%     ylabel('RPY angles [rad]');
+%     savefig(fig, [path 'pick' num2str(i) '_trajVsik_rot']);
+%     if strcmp(gen_pdf, 'yes')
+%         saveas(fig, [path 'pick' num2str(i) '_trajVsik_rot'], 'pdf');
+%     end
+%     close;
+    
+end
+
+%% Trajectory Error IK (Place Phase)
+
+for i = 1 : length(place)
+    
+    % Forward kinematics trajectory (from IK)
+    fig = openfig([path 'place' num2str(i) '_traj_pos']);
+    hold on;
+    
+    P = transl(robot.fkine(place{i}.ik.no_opt.q(:,:)));
+    
+    plot(P);
+    hold off;
+    title(['Task ' num2str(i) ' - Place - IK Transl. Trajectory Error']);
+    legend('Ideal x', 'Ideal y', 'Ideal z', 'IK x', ...
+        'IK y', 'IK z');
+    xlabel('Time Steps');
+    ylabel('Distance [m]');
+    savefig(fig, [path 'place' num2str(i) '_trajVsik_pos']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_trajVsik_pos'], 'pdf');
+    end
+    close;
+    
+    % Rotation trajectory (RPY angles)
+%     fig = openfig([path 'place' num2str(i) '_traj_rot']);
+%     hold on;
+%     
+%     R = tr2rpy(robot.fkine(place{i}.ik.no_opt.q(:,:)));
+%     
+%     plot(R);
+%     hold off;
+%     title(['Task ' num2str(i) ' - Place - IK Rot. Trajectory Error']);
+%     legend('Ideal roll', 'Ideal pitch', 'Ideal yaw', 'IK roll', ...
+%         'IK pitch', 'IK yaw');
+%     xlabel('Time Steps');
+%     ylabel('RPY angles [rad]');
+%     savefig(fig, [path 'place' num2str(i) '_trajVsik_rot']);
+%     if strcmp(gen_pdf, 'yes')
+%         saveas(fig, [path 'place' num2str(i) '_trajVsik_rot'], 'pdf');
+%     end
+%     close;
+    
+end
+
+%% Trajectory Error CLIK (Pick Phase)
+
+for i = 1 : length(pick)
+    
+    % Forward kinematics trajectory (from CLIK)
+    fig = openfig([path 'pick' num2str(i) '_traj_pos']);
+    hold on;
+    
+    P = transl(robot.fkine(pick{i}.clik.no_opt.q(:,:)));
+    
+    plot(P);
+    hold off;
+    title(['Task ' num2str(i) ' - Pick - CLIK Transl. Trajectory Error']);
+    legend('Ideal x', 'Ideal y', 'Ideal z', 'CLIK x', ...
+        'CLIK y', 'CLIK z');
+    xlabel('Time Steps');
+    ylabel('Distance [m]');
+    savefig(fig, [path 'pick' num2str(i) '_trajVsclik_pos']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_trajVsclik_pos'], 'pdf');
+    end
+    close;
+    
+    % Rotation trajectory (RPY angles)
+%     fig = openfig([path 'pick' num2str(i) '_traj_rot']);
+%     hold on;
+%     
+%     R = tr2rpy(robot.fkine(pick{i}.clik.no_opt.q(:,:)));
+%     
+%     plot(R);
+%     hold off;
+%     title(['Task ' num2str(i) ' - Pick - CLIK Rot. Trajectory Error']);
+%     legend('Ideal roll', 'Ideal pitch', 'Ideal yaw', 'CLIK roll', ...
+%         'CLIK pitch', 'CLIK yaw');
+%     xlabel('Time Steps');
+%     ylabel('RPY angles [rad]');
+%     savefig(fig, [path 'pick' num2str(i) '_trajVsclik_rot']);
+%     if strcmp(gen_pdf, 'yes')
+%         saveas(fig, [path 'pick' num2str(i) '_trajVsclik_rot'], 'pdf');
+%     end
+%     close;
+    
+end
+
+%% Trajectory Error CLIK (Place Phase)
+
+for i = 1 : length(place)
+    
+    % Forward kinematics trajectory (from CLIK)
+    fig = openfig([path 'place' num2str(i) '_traj_pos']);
+    hold on;
+    
+    P = transl(robot.fkine(place{i}.clik.no_opt.q(:,:)));
+    
+    plot(P);
+    hold off;
+    title(['Task ' num2str(i) ' - Place - CLIK Transl. Trajectory Error']);
+    legend('Ideal x', 'Ideal y', 'Ideal z', 'CLIK x', ...
+        'CLIK y', 'CLIK z');
+    xlabel('Time Steps');
+    ylabel('Distance [m]');
+    savefig(fig, [path 'place' num2str(i) '_trajVsclik_pos']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_trajVsclik_pos'], 'pdf');
+    end
+    close;
+    
+    % Rotation trajectory (RPY angles)
+%     fig = openfig([path 'place' num2str(i) '_traj_rot']);
+%     hold on;
+%     
+%     R = tr2rpy(robot.fkine(place{i}.clik.no_opt.q(:,:)));
+%     
+%     plot(R);
+%     hold off;
+%     title(['Task ' num2str(i) ' - Place - CLIK Rot. Trajectory Error']);
+%     legend('Ideal roll', 'Ideal pitch', 'Ideal yaw', 'CLIK roll', ...
+%         'CLIK pitch', 'CLIK yaw');
+%     xlabel('Time Steps');
+%     ylabel('RPY angles [rad]');
+%     savefig(fig, [path 'place' num2str(i) '_trajVsclik_rot']);
+%     if strcmp(gen_pdf, 'yes')
+%         saveas(fig, [path 'place' num2str(i) '_trajVsclik_rot'], 'pdf');
+%     end
+%     close;
+    
 end
 
 %% Ellipsoids
@@ -88,7 +274,9 @@ xlabel('x [m/s]');
 ylabel('y [m/s]');
 zlabel('z [m/s]');
 savefig(fig, [path 'ellips_pick_transl']);
-saveas(fig, [path 'ellips_pick_transl'], 'pdf');
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [path 'ellips_pick_transl'], 'pdf');
+end
 close;
 
 % Rotational velocity
@@ -103,7 +291,9 @@ xlabel('x [rad/s]');
 ylabel('y [rad/s]');
 zlabel('z [rad/s]');
 savefig(fig, [path 'ellips_pick_rot']);
-saveas(fig, [path 'ellips_pick_rot', 'pdf']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [path 'ellips_pick_rot', 'pdf']);
+end
 close;
 
 % Place phase initial pose velocity ellipsoids
@@ -124,7 +314,9 @@ for i = 1 : length(place)
     ylabel('y [m/s]');
     zlabel('z [m/s]');
     savefig(fig, [path 'ellips_place' num2str(i) '_transl']);
-    saveas(fig, [path 'ellips_place' num2str(i) '_transl'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'ellips_place' num2str(i) '_transl'], 'pdf');
+    end
     close;
     
     % Rotational velocity
@@ -140,7 +332,9 @@ for i = 1 : length(place)
     ylabel('y [rad/s]');
     zlabel('z [rad/s]');
     savefig(fig, [path 'ellips_place' num2str(i) '_rot']);
-    saveas(fig, [path 'ellips_place' num2str(i) '_rot', 'pdf']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'ellips_place' num2str(i) '_rot', 'pdf']);
+    end
     close;
 
 end
@@ -155,7 +349,9 @@ for i = 1 : length(pick)
     
     title(['Task ' num2str(i) ' - Pick IK - No Opt. Joint Space Motion']);
     savefig(fig, [path 'pick' num2str(i) '_ik_noopt_q']);
-    saveas(fig, [path 'pick' num2str(i) '_ik_noopt_q'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_ik_noopt_q'], 'pdf');
+    end
     close;
     
     % CLIK no optimization
@@ -164,7 +360,9 @@ for i = 1 : length(pick)
     title(['Task ' num2str(i) ...
         ' -  Pick CLIK - No Opt. Joint Space Motion']);
     savefig(fig, [path 'pick' num2str(i) '_clik_noopt_q']);
-    saveas(fig, [path 'pick' num2str(i) '_clik_noopt_q'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_clik_noopt_q'], 'pdf');
+    end
     close;
     
     % Optimizations
@@ -187,7 +385,9 @@ for i = 1 : length(pick)
         title(['Task ' num2str(i) ' Pick IK - ' type ...
             ' Opt. Joint Space Motion']);
         savefig(fig, [path 'pick' num2str(i) '_ik_' stype '_q']);
-        saveas(fig, [path 'pick' num2str(i) '_ik_' stype '_q'], 'pdf');
+        if strcmp(gen_pdf, 'yes')
+            saveas(fig, [path 'pick' num2str(i) '_ik_' stype '_q'], 'pdf');
+        end
         close;
         
         % CLIK with optimization
@@ -196,7 +396,10 @@ for i = 1 : length(pick)
         title(['Task ' num2str(i) ' CLIK - ' type ' Opt. Joint Space ' ...
             'Motion']);
         savefig(fig, [path 'pick' num2str(i) '_clik_' stype '_q']);
-        saveas(fig, [path 'pick' num2str(i) '_clik_' stype '_q'], 'pdf');
+        if strcmp(gen_pdf, 'yes')
+            saveas(fig, [path 'pick' num2str(i) '_clik_' stype '_q'], ...
+                'pdf');
+        end
         close;
         
     end
@@ -213,7 +416,9 @@ for i = 1 : length(place)
     
     title(['Task ' num2str(i) ' - Place IK - No Opt. Joint Space Motion']);
     savefig(fig, [path 'place' num2str(i) '_ik_noopt_q']);
-    saveas(fig, [path 'place' num2str(i) '_ik_noopt_q'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_ik_noopt_q'], 'pdf');
+    end
     close;
     
     % CLIK no optimization
@@ -222,7 +427,9 @@ for i = 1 : length(place)
     title(['Task ' num2str(i) ...
         ' - Place CLIK - No Opt. Joint Space Motion']);
     savefig(fig, [path 'place' num2str(i) '_clik_noopt_q']);
-    saveas(fig, [path 'place' num2str(i) '_clik_noopt_q'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_clik_noopt_q'], 'pdf');
+    end
     close;
     
     % Optimizations
@@ -245,7 +452,10 @@ for i = 1 : length(place)
         title(['Task ' num2str(i) ' - Place IK - ' type ...
             ' Opt. Joint Space Motion']);
         savefig(fig, [path 'place' num2str(i) '_ik_' stype '_q']);
-        saveas(fig, [path 'place' num2str(i) '_ik_' stype '_q'], 'pdf');
+        if strcmp(gen_pdf, 'yes')
+            saveas(fig, [path 'place' num2str(i) '_ik_' stype '_q'], ...
+                'pdf');
+        end
         close;
         
         % CLIK with optimization
@@ -254,7 +464,10 @@ for i = 1 : length(place)
         title(['Task ' num2str(i) ' - Place CLIK - ' type ...
             ' Opt. Joint Space Motion']);
         savefig(fig, [path 'place' num2str(i) '_clik_' stype '_q']);
-        saveas(fig, [path 'place' num2str(i) '_clik_' stype '_q'], 'pdf');
+        if strcmp(gen_pdf, 'yes')
+            saveas(fig, [path 'place' num2str(i) '_clik_' stype '_q'], ...
+                'pdf');
+        end
         close;
         
     end
@@ -283,7 +496,9 @@ for i = 1 : length(pick)
     title(['Manipulability - Task ' num2str(i) ' - Pick IK']);
     legend('No opt.', 'Opt.');
     savefig(fig, [path 'pick' num2str(i) '_ik_manip']);
-    saveas(fig, [path 'pick' num2str(i) '_ik_manip'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_ik_manip'], 'pdf');
+    end
     close;
     
     % Manipulability comparison CLIK
@@ -300,8 +515,10 @@ for i = 1 : length(pick)
     title(['Manipulability - Task ' num2str(i) ' - Pick CLIK']);
     legend('No opt.', 'Opt.');
     savefig(fig, [path 'pick' num2str(i) '_clik_manip']);
-    saveas(fig, [path 'pick' num2str(i) '_clik_manip'], ...
-        'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_clik_manip'], ...
+            'pdf');
+    end
     close;
     
 end
@@ -327,7 +544,9 @@ for i = 1 : length(place)
     title(['Manipulability - Task ' num2str(i) ' - Place IK']);
     legend('No opt.', 'Opt.');
     savefig(fig, [path 'place' num2str(i) '_ik_manip']);
-    saveas(fig, [path 'place' num2str(i) '_ik_manip'], 'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_ik_manip'], 'pdf');
+    end
     close;
     
     % Manipulability comparison CLIK
@@ -344,31 +563,125 @@ for i = 1 : length(place)
     title(['Manipulability - Task ' num2str(i) ' - Place CLIK']);
     legend('No opt.', 'Opt.');
     savefig(fig, [path 'place' num2str(i) '_clik_manip']);
-    saveas(fig, [path 'place' num2str(i) '_clik_manip'], ...
-        'pdf');
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_clik_manip'], ...
+            'pdf');
+    end
     close;
     
 end
 
+%% Joint limits plots CLIK (Pick)
+
+for i = 1 : length(pick)
+    
+    j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
+    dist_noopt = zeros(1, N);
+    dist_opt = zeros(1, N);
+    
+    for j = 1 : N
+        dist_noopt(j) = (1 / (2*robot.n))*sumsqr( ...
+            (pick{i}.clik.no_opt.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+            robot.qlim(:,1)));
+        dist_opt(j) = (1 / (2*robot.n)) * sumsqr( ...
+            (pick{i}.clik.opt{1}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+            robot.qlim(:,1)));
+    end
+    
+    fig = figure;
+    
+    plot(1:N, dist_noopt);
+    hold on;
+    plot(1:N, dist_opt);
+    hold off;
+    title(['Joint Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
+    legend('No opt.', 'Opt.');
+    savefig(fig, [path 'pick' num2str(i) '_clik_dist']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'pick' num2str(i) '_clik_dist'], 'pdf');
+    end
+    close;
+
+end
+
+%% Joint limits plots CLIK (Place)
+
+for i = 1 : length(place)
+    
+    j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
+    dist_noopt = zeros(1, N);
+    dist_opt = zeros(1, N);
+    
+    for j = 1 : N
+        dist_noopt(j) = (1 / (2*robot.n))*sumsqr( ...
+            (place{i}.clik.no_opt.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+            robot.qlim(:,1)));
+        dist_opt(j) = (1 / (2*robot.n)) * sumsqr( ...
+            (place{i}.clik.opt{1}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+            robot.qlim(:,1)));
+    end
+    
+    fig = figure;
+    
+    plot(1:N, dist_noopt);
+    hold on;
+    plot(1:N, dist_opt);
+    hold off;
+    title(['Joint Medium Distance - Task ' num2str(i) ' - Place CLIK']);
+    legend('No opt.', 'Opt.');
+    savefig(fig, [path 'place' num2str(i) '_clik_dist']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [path 'place' num2str(i) '_clik_dist'], 'pdf');
+    end
+    close;
+
+end
+
 %% Workspace Analysis plots
 
-scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.');
+% Cloud of points
+fig = figure;
 
+scatter3(scatter(:,1), scatter(:,2), scatter(:,3), '.');
 hold on
+
 for i = 1: length(work_manipl)
     if (work_manipl(i,1) < 0.5)
         scatter3(scatter(i,1), scatter(i,2), scatter(i,3), '.', 'r');
     end
 end
 
+hold off;
+
+savefig(fig, [path 'workspace_cloud']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [path 'workspace_cloud'], ...
+        'pdf');
+end
+close;
+
+% Convex hull
+fig = figure;
 
 dela = delaunay(scatter(:,1), scatter(:,2), scatter(:,3));
-tsearchn(scatter, dela, [-1.5 -2.5 0])
-trisurf(dela, scatter(:,1),scatter(:,2), scatter(:,3))
+tsearchn(scatter, dela, [-1.5 -2.5 0]);
+trisurf(dela, scatter(:,1),scatter(:,2), scatter(:,3));
 
-h = histogram(work_manipl(:,1));
-for i = 1: length(work_manipl)
-    if work_manipl(i, :) == 0.0031
-        break
-    end
+savefig(fig, [path 'workspace_convex']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [path 'workspace_convex'], ...
+        'pdf');
 end
+close;
+
+% Workspace manipulability
+fig = figure;
+
+histogram(work_manipl(:,1));
+
+savefig(fig, [path 'workspace_manip']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [path 'workspace_manip'], ...
+        'pdf');
+end
+close;

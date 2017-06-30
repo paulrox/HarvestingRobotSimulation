@@ -13,7 +13,7 @@ pick{3} = struct;
 N = 200;
 dt = 0.01;
 T0 = robot.fkine(qn);
-num_opt = 3; % Number of optimizations actually in use
+num_opt = 1; % Number of optimizations actually in use
 
 for i = 1 : length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
@@ -63,6 +63,7 @@ for i = 1 : length(pick)
             pick{i}.clik.no_opt.K * delta_k);
         pick{i}.clik.no_opt.q(j+1,:) = pick{i}.clik.no_opt.q(j,:) + ...
             (pick{i}.clik.no_opt.qdot(j,:) * dt);
+        check_jlim(robot, pick{i}.clik.no_opt.q(j+1,:));
     end
 end
 
@@ -87,7 +88,7 @@ for i = 1 : length(pick)
             case 1
                 opt_name = 'joint';
                 constraints = 'no';
-                k0 = 1;
+                k0 = 0.5;
                 disp('Optimizing distance from mechanical joint limits');
             case 2
                 opt_name = 'manip';

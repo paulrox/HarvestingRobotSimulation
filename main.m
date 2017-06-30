@@ -73,7 +73,7 @@ plot_robot(robot, qn, fruit{1}, 'r');
 
 %% Plot the robot performing the task
 
-plot_robot(robot, pick{2}.ik.no_opt.q, fruit{2}, 'r');
+plot_robot(robot, pick{1}.ik.opt{1}.q, fruit{1}, 'r');
 
 %% Plot the robot performing the reachable task without cart 
 
@@ -92,6 +92,13 @@ qmax = [160; 170; 180; 170; 180; 270];
 %         break
 %     end
 % end
+
+% for i = 1: length(work_manipl)
+%     if work_manipl(i, :) == 0.0031
+%         break
+%     end
+% end
+
 
 %% Generate and save the plots
 

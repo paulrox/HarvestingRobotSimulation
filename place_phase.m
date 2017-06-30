@@ -15,7 +15,7 @@ basket = T1(1:3,4);
 
 N = 200;
 dt = 0.01;
-num_opt = 2; % Number of optimizations actually in use
+num_opt = 1; % Number of optimizations actually in use
 
 T1 = robot.fkine(qn);
 
