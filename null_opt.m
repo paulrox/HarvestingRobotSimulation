@@ -1,7 +1,9 @@
-function [ q0 ] = null_opt(r, type, q_k, con, k0)
-%NULL_OPT Returns the q0 for null space optimization
+function [ q0_dot ] = null_opt(r, type, q_k, con, k0)
+%NULL_OPT Returns the q0_dot for null space optimization
 %   Returns the vector of the joint space velocities obtained using the
 %   optimization specified by 'type'
+
+global dist_grad q1 q2 q3 q4 q5 q6 q7 q8
 
     function dist = obj_f_orient(x)
         obj_z = [1 0 0]';
@@ -21,9 +23,9 @@ elseif strcmp(type, 'joint')
         r.qlim(:,1)));
 elseif strcmp(type, 'orient')
     % Orientation with the task object
-    obj_f = @(x) obj_f_orient(x);
-else
-    error('Undefined optimization type!');
+    obj_f = @(x) obj_f_orient(x);    
+% else
+%     error('Undefined optimization type!');
 end
 
 % Choose between contrained optimization or not
@@ -40,12 +42,23 @@ if strcmp(con, 'yes')
 
     opt = optimoptions('fmincon', 'Algorithm', 'interior-point', ...
         'Display', 'off');
-    q0 = fmincon(obj_f, q_k, [], [], [], [], lb,  ub, [], opt);
+    q0_dot = fmincon(obj_f, q_k, [], [], [], [], lb,  ub, [], opt);
 else
-    opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
+    if strcmp(type, 'grad')
+        lb = 0;
+        j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
+        opt = optimoptions('fmincon', 'Algorithm', 'interior-point', ...
         'Display', 'off');
-    q0 = fminunc(obj_f, q_k, opt);
-    
+        g = double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
+        obj_f = @(x) (1 / (2*r.n)) * sumsqr(((q_k - x * g)' - j_mid) ./ ...
+            (r.qlim(:,2) - r.qlim(:,1)));
+        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+        q0_dot = -t * double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
+    else
+        opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
+            'Display', 'off');
+        q0_dot = fminunc(obj_f, q_k, opt);
+    end
 end
 
 end

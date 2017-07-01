@@ -31,7 +31,7 @@ platform.base = trotx(pi/2);
 robot = SerialLink([platform arm], 'name', 'h_robot');
 
 % Joint limits
-robot.qlim = [-1 1;-1 1; deg2rad(110) deg2rad(250); ...
+robot.qlim = [-2 2;-2 2; deg2rad(110) deg2rad(250); ...
     -deg2rad(45) deg2rad(170); deg2rad(140) deg2rad(220); ...
     -deg2rad(170) deg2rad(170); deg2rad(0) deg2rad(180); ...
     -deg2rad(360) -deg2rad(270)];
@@ -73,7 +73,7 @@ plot_robot(robot, qn, fruit{1}, 'r');
 
 %% Plot the robot performing the task
 
-plot_robot(robot, pick{1}.ik.opt{1}.q, fruit{1}, 'r');
+plot_robot(robot, pick{1}.clik.opt{1}.q, fruit{1}, 'r');
 
 %% Plot the robot performing the reachable task without cart 
 

@@ -85,16 +85,21 @@ for i = 1 : length(pick)
         qns = zeros(1,8);
         
         switch k
-            case 1
+            case 2
                 opt_name = 'joint';
                 constraints = 'no';
-                k0 = 0.5;
+                k0 = 1;
                 disp('Optimizing distance from mechanical joint limits');
-            case 2
-                opt_name = 'manip';
+            case 1
+                opt_name = 'grad';
                 constraints = 'no';
                 k0 = 1;
-                disp('Optimizing manipulability');
+                disp('Optimizing using gradient');
+
+%                 opt_name = 'manip';
+%                 constraints = 'no';
+%                 k0 = 1;
+%                 disp('Optimizing manipulability');
             otherwise
                 opt_name  = 'orient';
                 constraints = 'no';
