@@ -1,6 +1,7 @@
-function [ q0_dot ] = dev_free_opt( r, type, q_k )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+function [ q0_dot ] = deriv_free_opt( r, type, q_k )
+%deriv_free_opt Optimizes the q0' values by using a derivative free method
+%   It tries to find the optmial value by following the cartesian
+%   coordinates directions
 
 if strcmp(type, 'manip')
     obj_f = @(x) -r.maniplty(x, 'yoshikawa');

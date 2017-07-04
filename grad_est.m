@@ -9,6 +9,8 @@ elseif strcmp(type, 'joint')
     j_mid = mean([r.qlim(:,2) r.qlim(:,1)], 2);
     obj_f = @(x) (1 / (2*r.n)) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
         r.qlim(:,1)));
+elseif strcmp(type, 'plane')
+    obj_f = @(x) -dist_plane(r, x);
 end
 
 xk = q_k;

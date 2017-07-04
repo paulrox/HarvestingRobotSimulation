@@ -98,7 +98,7 @@ for i = 1 : length(pick)
                 constraints = 'ciao';
                 k0 = 1;
                 disp('Optimizing joint distance using gradient');
-            case 1
+            case 5
                 opt_name = 'manip';
                 constraints = 'no';
                 k0 = 1;
@@ -108,11 +108,17 @@ for i = 1 : length(pick)
                 constraints = 'no';
                 k0 = 1;
                 disp('Optimizing orientation using gradient');
+            case 1
+                opt_name  = 'grad_plane';
+                constraints = 'no';
+                k0 = 1;
+                disp('Optimizing tree plane distance');
             otherwise
                 opt_name  = 'orient';
                 constraints = 'no';
                 k0 = 1;
                 disp('Optimizing orientation with task object');
+                
         end
         
         for j = 1 : (N-1)
@@ -135,12 +141,12 @@ for i = 1 : length(pick)
                 pick{i}.TC(:,:,j));
             J = robot.jacob0(pick{i}.clik.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
-%             pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
-%                 pick{i}.clik.opt{k}.q(j,:), constraints);
+            pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
+                pick{i}.clik.opt{k}.q(j,:), constraints);
 %             pick{i}.clik.opt{k}.q0 = k0 * dev_free_opt(robot, opt_name, ...
 %                 pick{i}.clik.opt{k}.q(j,:));
-            pick{i}.clik.opt{k}.q0 = k0 * grad_est(robot, opt_name, ...
-                pick{i}.clik.opt{k}.q(j,:));
+%             pick{i}.clik.opt{k}.q0 = k0 * grad_est(robot, opt_name, ...
+%                 pick{i}.clik.opt{k}.q(j,:));
             pick{i}.clik.opt{k}.q0
             qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0';
             pick{i}.clik.opt{k}.qdot(j,:) = Jpinv * (pick{i}.ve(j,:)' + ...

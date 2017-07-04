@@ -6,7 +6,6 @@ if exist('figs', 'dir') ~= 7
 end
 
 gen_pdf = 'no';
-
 fig_path = [pwd '/figs/'];
 
 %% Trajectory plots (Pick Phase)
@@ -107,7 +106,7 @@ for i = 1 : length(pick)
     close;
     
     % Rotation trajectory (RPY angles)
-%     fig = openfig([path 'pick' num2str(i) '_traj_rot']);
+%     fig = openfig([fig_path 'pick' num2str(i) '_traj_rot']);
 %     hold on;
 %     
 %     R = tr2rpy(robot.fkine(pick{i}.ik.no_opt.q(:,:)));
@@ -119,9 +118,9 @@ for i = 1 : length(pick)
 %         'IK pitch', 'IK yaw');
 %     xlabel('Time Steps');
 %     ylabel('RPY angles [rad]');
-%     savefig(fig, [path 'pick' num2str(i) '_trajVsik_rot']);
+%     savefig(fig, [fig_path 'pick' num2str(i) '_trajVsik_rot']);
 %     if strcmp(gen_pdf, 'yes')
-%         saveas(fig, [path 'pick' num2str(i) '_trajVsik_rot'], 'pdf');
+%         saveas(fig, [fig_path 'pick' num2str(i) '_trajVsik_rot'], 'pdf');
 %     end
 %     close;
     
@@ -151,7 +150,7 @@ for i = 1 : length(place)
     close;
     
     % Rotation trajectory (RPY angles)
-%     fig = openfig([path 'place' num2str(i) '_traj_rot']);
+%     fig = openfig([fig_path 'place' num2str(i) '_traj_rot']);
 %     hold on;
 %     
 %     R = tr2rpy(robot.fkine(place{i}.ik.no_opt.q(:,:)));
@@ -163,9 +162,9 @@ for i = 1 : length(place)
 %         'IK pitch', 'IK yaw');
 %     xlabel('Time Steps');
 %     ylabel('RPY angles [rad]');
-%     savefig(fig, [path 'place' num2str(i) '_trajVsik_rot']);
+%     savefig(fig, [fig_path 'place' num2str(i) '_trajVsik_rot']);
 %     if strcmp(gen_pdf, 'yes')
-%         saveas(fig, [path 'place' num2str(i) '_trajVsik_rot'], 'pdf');
+%         saveas(fig, [fig_path 'place' num2str(i) '_trajVsik_rot'], 'pdf');
 %     end
 %     close;
     
@@ -195,7 +194,7 @@ for i = 1 : length(pick)
     close;
     
     % Rotation trajectory (RPY angles)
-%     fig = openfig([path 'pick' num2str(i) '_traj_rot']);
+%     fig = openfig([fig_path 'pick' num2str(i) '_traj_rot']);
 %     hold on;
 %     
 %     R = tr2rpy(robot.fkine(pick{i}.clik.no_opt.q(:,:)));
@@ -207,9 +206,9 @@ for i = 1 : length(pick)
 %         'CLIK pitch', 'CLIK yaw');
 %     xlabel('Time Steps');
 %     ylabel('RPY angles [rad]');
-%     savefig(fig, [path 'pick' num2str(i) '_trajVsclik_rot']);
+%     savefig(fig, [fig_path 'pick' num2str(i) '_trajVsclik_rot']);
 %     if strcmp(gen_pdf, 'yes')
-%         saveas(fig, [path 'pick' num2str(i) '_trajVsclik_rot'], 'pdf');
+%         saveas(fig, [fig_path 'pick' num2str(i) '_trajVsclik_rot'], 'pdf');
 %     end
 %     close;
     
@@ -239,7 +238,7 @@ for i = 1 : length(place)
     close;
     
     % Rotation trajectory (RPY angles)
-%     fig = openfig([path 'place' num2str(i) '_traj_rot']);
+%     fig = openfig([fig_path 'place' num2str(i) '_traj_rot']);
 %     hold on;
 %     
 %     R = tr2rpy(robot.fkine(place{i}.clik.no_opt.q(:,:)));
@@ -251,9 +250,9 @@ for i = 1 : length(place)
 %         'CLIK pitch', 'CLIK yaw');
 %     xlabel('Time Steps');
 %     ylabel('RPY angles [rad]');
-%     savefig(fig, [path 'place' num2str(i) '_trajVsclik_rot']);
+%     savefig(fig, [fig_path 'place' num2str(i) '_trajVsclik_rot']);
 %     if strcmp(gen_pdf, 'yes')
-%         saveas(fig, [path 'place' num2str(i) '_trajVsclik_rot'], 'pdf');
+%         saveas(fig, [fig_path 'place' num2str(i) '_trajVsclik_rot'], 'pdf');
 %     end
 %     close;
     
@@ -479,33 +478,14 @@ for i = 1 : length(place)
     
 end
 
-%% Manipulability analysis (Pick)
+%% Manipulability analysis CLIK (Pick)
 
 for i = 1 : length(pick)
     
-    % Manipulability comparison IK
     man_noopt = zeros(1,N);
     man_opt = zeros(1,N);
-%     
-%     for j = 1 : N
-%         man_noopt(j) = robot.maniplty(pick{i}.ik.no_opt.q(j,:));
-%         man_opt(j) = robot.maniplty(pick{i}.ik.opt{2}.q(j,:));
-%     end
-%     fig = figure;
-%     
-%     plot(1:N, man_noopt);
-%     hold on;
-%     plot(1:N, man_opt);
-%     hold off;
-%     title(['Manipulability - Task ' num2str(i) ' - Pick IK']);
-%     legend('No opt.', 'Opt.');
-%     savefig(fig, [path 'pick' num2str(i) '_ik_manip']);
-%     if strcmp(gen_pdf, 'yes')
-%         saveas(fig, [path 'pick' num2str(i) '_ik_manip'], 'pdf');
-%     end
-%     close;
     
-    % Manipulability comparison CLIK
+    % Manipulability comparison no optimization vs. man. optimization
     for j = 1 : N
         man_noopt(j) = robot.maniplty(pick{i}.clik.no_opt.q(j,:));
         man_opt(j) = robot.maniplty(pick{i}.clik.opt{1}.q(j,:));
@@ -531,29 +511,10 @@ end
 
 for i = 1 : length(place)
     
-    % Manipulability comparison IK
     man_noopt = zeros(1,N);
     man_opt = zeros(1,N);
     
-    for j = 1 : N
-        man_noopt(j) = robot.maniplty(place{i}.ik.no_opt.q(j,:));
-        man_opt(j) = robot.maniplty(place{i}.ik.opt{2}.q(j,:));
-    end
-    fig = figure;
-    
-    plot(1:N, man_noopt);
-    hold on;
-    plot(1:N, man_opt);
-    hold off;
-    title(['Manipulability - Task ' num2str(i) ' - Place IK']);
-    legend('No opt.', 'Opt.');
-    savefig(fig, [fig_path 'place' num2str(i) '_ik_manip']);
-    if strcmp(gen_pdf, 'yes')
-        saveas(fig, [fig_path 'place' num2str(i) '_ik_manip'], 'pdf');
-    end
-    close;
-    
-    % Manipulability comparison CLIK
+    % Manipulability comparison no optimization vs. man. optimization
     for j = 1 : N
         man_noopt(j) = robot.maniplty(place{i}.clik.no_opt.q(j,:));
         man_opt(j) = robot.maniplty(place{i}.clik.opt{2}.q(j,:));
@@ -636,6 +597,56 @@ for i = 1 : length(place)
     savefig(fig, [fig_path 'place' num2str(i) '_clik_dist']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'place' num2str(i) '_clik_dist'], 'pdf');
+    end
+    close;
+
+end
+
+%% Plane distance plots CLIK (Pick)
+
+for i = 1 : length(pick)
+      
+    for j = 1 : N
+        dist_noopt(j) = dist_plane(robot, pick{i}.clik.no_opt.q(j,:));
+        dist_opt(j) = dist_plane(robot, pick{i}.clik.opt{1}.q(j,:));
+    end
+    
+    fig = figure;
+    
+    plot(1:N, dist_noopt);
+    hold on;
+    plot(1:N, dist_opt);
+    hold off;
+    title(['Plane Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
+    legend('No opt.', 'Opt.');
+    savefig(fig, [fig_path 'pick' num2str(i) '_clik_plane']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [fig_path 'pick' num2str(i) '_clik_plane'], 'pdf');
+    end
+    close;
+
+end
+
+%% Plane distance plots CLIK (Place)
+
+for i = 1 : length(place)
+      
+    for j = 1 : N
+        dist_noopt(j) = dist_plane(robot, place{i}.clik.no_opt.q(j,:));
+        dist_opt(j) = dist_plane(robot, place{i}.clik.opt{1}.q(j,:));
+    end
+    
+    fig = figure;
+    
+    plot(1:N, dist_noopt);
+    hold on;
+    plot(1:N, dist_opt);
+    hold off;
+    title(['Plane Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
+    legend('No opt.', 'Opt.');
+    savefig(fig, [fig_path 'place' num2str(i) '_clik_plane']);
+    if strcmp(gen_pdf, 'yes')
+        saveas(fig, [fig_path 'place' num2str(i) '_clik_plane'], 'pdf');
     end
     close;
 

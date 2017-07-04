@@ -3,7 +3,7 @@ function [ q0_dot ] = null_opt(r, type, q_k, con)
 %   Returns the vector of the joint space velocities obtained using the
 %   optimization specified by 'type'
 
-global dist_grad orient_grad q1 q2 q3 q4 q5 q6 q7 q8
+global dist_grad orient_grad plane_grad q1 q2 q3 q4 q5 q6 q7 q8
 
 % Objective function to be optimized
 if strcmp(type, 'manip')
@@ -32,6 +32,10 @@ elseif strcmp(type, 'grad_orient')
     % Distance from mechanical joint limits using gradient
     g = double(subs(orient_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
     obj_f = @(x) obj_f_orient(r, (q_k - x * g));
+elseif strcmp(type, 'grad_plane')
+    % Distance from mechanical joint limits using gradient
+    g = double(subs(plane_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'));
+    obj_f = @(x) -dist_plane(r, (q_k - x * g));
 else
     error('Undefined optimization type!');
 end
@@ -51,10 +55,11 @@ elseif strcmp(con, 'no')
         'Display', 'off');
     q0_dot = fminunc(obj_f, q_k, opt);
     
-elseif strcmp(type, 'grad_joint') || strcmp(type, 'grad_orient')
+elseif strcmp(type, 'grad_joint') || strcmp(type, 'grad_orient') || ...
+        strcmp(type, 'grad_plane')
     lb = 0;
     opt = optimoptions('fmincon', 'Display', 'off');
-    t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+    t = fmincon(obj_f, 10e-3, [], [], [], [], lb,  [], [], opt)
     q0_dot = -t * g;
     
 end
