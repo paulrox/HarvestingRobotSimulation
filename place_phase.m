@@ -1,5 +1,8 @@
 %% Place Phase
 
+% Compute or not optimizations for open-loop IK
+use_ik_opt = 0;
+
 % Tasks definition
 place = cell(1, 3);
 

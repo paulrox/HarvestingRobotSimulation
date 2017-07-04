@@ -1,15 +1,10 @@
-function [ q0_dot ] = null_opt(r, type, q_k, con, k0)
+function [ q0_dot ] = null_opt(r, type, q_k, con)
 %NULL_OPT Returns the q0_dot for null space optimization
 %   Returns the vector of the joint space velocities obtained using the
 %   optimization specified by 'type'
 
-global dist_grad q1 q2 q3 q4 q5 q6 q7 q8
+global dist_grad orient_grad q1 q2 q3 q4 q5 q6 q7 q8
 
-    function dist = obj_f_orient(x)
-        obj_z = [1 0 0]';
-        kine = r.fkine(x);
-        dist = dot(obj_z, kine(1:3,3));
-    end
 % Objective function to be optimized
 if strcmp(type, 'manip')
     % Manipolability
@@ -18,47 +13,50 @@ if strcmp(type, 'manip')
     
 elseif strcmp(type, 'joint')
     % Distance from mechanical joint limits
-    j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
-    obj_f = @(x) (1 / (2*r.n)) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
+    j_mid = mean([r.qlim(:,2) r.qlim(:,1)], 2);
+    obj_f = @(x) (1 / (2)) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
         r.qlim(:,1)));
+    
 elseif strcmp(type, 'orient')
     % Orientation with the task object
-    obj_f = @(x) obj_f_orient(x);    
-% else
-%     error('Undefined optimization type!');
+    obj_f = @(x) obj_f_orient(r, x);
+    
+elseif strcmp(type, 'grad_joint')
+    % Distance from mechanical joint limits using gradient
+    j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
+    g = double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
+    obj_f = @(x) (1 / (2*r.n)) * sumsqr(((q_k - x * g)' - j_mid) ./ ...
+            (r.qlim(:,2) - r.qlim(:,1)));
+        
+elseif strcmp(type, 'grad_orient')
+    % Distance from mechanical joint limits using gradient
+    g = double(subs(orient_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
+    obj_f = @(x) obj_f_orient(r, (q_k - x * g));
+else
+    error('Undefined optimization type!');
 end
 
 % Choose between contrained optimization or not
-if strcmp(con, 'yes')
-    
-% Old constaints, they consider q0
+if strcmp(con, 'yes') 
+    % Old constaints, they consider q0
     lb = r.qlim(:, 1)';
     ub = r.qlim(:, 2)';
-
-%     J = r.jacob0(q_k);
-%     Jpinv = J' * ((J * J')^-1);
-%     lb = ((r.qlim(:, 1)' -  q_k) / k0 ) / (inv(eye(8) - Jpinv*J))
-%     ub = ((r.qlim(:, 2)' -  q_k) / k0 ) / (inv(eye(8) - Jpinv*J))
-
+    
     opt = optimoptions('fmincon', 'Algorithm', 'interior-point', ...
         'Display', 'off');
     q0_dot = fmincon(obj_f, q_k, [], [], [], [], lb,  ub, [], opt);
-else
-    if strcmp(type, 'grad')
-        lb = 0;
-        j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
-        opt = optimoptions('fmincon', 'Algorithm', 'interior-point', ...
+    
+elseif strcmp(con, 'no')
+    opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
         'Display', 'off');
-        g = double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
-        obj_f = @(x) (1 / (2*r.n)) * sumsqr(((q_k - x * g)' - j_mid) ./ ...
-            (r.qlim(:,2) - r.qlim(:,1)));
-        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
-        q0_dot = -t * double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
-    else
-        opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
-            'Display', 'off');
-        q0_dot = fminunc(obj_f, q_k, opt);
-    end
+    q0_dot = fminunc(obj_f, q_k, opt);
+    
+elseif strcmp(type, 'grad_joint') || strcmp(type, 'grad_orient')
+    lb = 0;
+    opt = optimoptions('fmincon', 'Display', 'off');
+    t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+    q0_dot = -t * g;
+    
 end
 
 end

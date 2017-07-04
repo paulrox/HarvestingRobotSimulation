@@ -1,5 +1,8 @@
 %% Pick Phase
 
+% Compute or not optimizations for open-loop IK
+use_ik_opt = 0;
+
 % Tasks definition
 pick = cell(1, 3);
 
@@ -90,16 +93,21 @@ for i = 1 : length(pick)
                 constraints = 'no';
                 k0 = 1;
                 disp('Optimizing distance from mechanical joint limits');
+            case 4
+                opt_name = 'grad_joint';
+                constraints = 'ciao';
+                k0 = 1;
+                disp('Optimizing joint distance using gradient');
             case 1
-                opt_name = 'grad';
+                opt_name = 'manip';
                 constraints = 'no';
                 k0 = 1;
-                disp('Optimizing using gradient');
-
-%                 opt_name = 'manip';
-%                 constraints = 'no';
-%                 k0 = 1;
-%                 disp('Optimizing manipulability');
+                disp('Optimizing manipulability');
+            case 3
+                opt_name  = 'grad_orient';
+                constraints = 'no';
+                k0 = 1;
+                disp('Optimizing orientation using gradient');
             otherwise
                 opt_name  = 'orient';
                 constraints = 'no';
@@ -109,24 +117,31 @@ for i = 1 : length(pick)
         
         for j = 1 : (N-1)
             % Null space optimization (IK)
-            J = robot.jacob0(pick{i}.ik.opt{k}.q(j,:));
-            Jpinv = J' * ((J * J')^-1);
-            pick{i}.ik.opt{k}.q0 = k0 * null_opt(robot, ...
-                opt_name, pick{i}.ik.opt{k}.q(j,:), constraints, k0);
-            qns = (eye(8) - Jpinv * J) * pick{i}.ik.opt{k}.q0';
-            pick{i}.ik.opt{k}.qdot(j,:) = Jpinv * pick{i}.ve(j,:)'+qns;
-            pick{i}.ik.opt{k}.q(j+1,:) = pick{i}.ik.opt{k}.q(j,:) + ...
-                (pick{i}.ik.opt{k}.qdot(j,:) * dt);
-            % Check whether the joints are within the limits or not
-            % check_jlim(robot, task{i}.ik.opt{k}.q(j+1,:));
+            if use_ik_opt
+                J = robot.jacob0(pick{i}.ik.opt{k}.q(j,:));
+                Jpinv = J' * ((J * J')^-1);
+                pick{i}.ik.opt{k}.q0 = k0 * null_opt(robot, ...
+                    opt_name, pick{i}.ik.opt{k}.q(j,:), constraints);
+                qns = (eye(8) - Jpinv * J) * pick{i}.ik.opt{k}.q0';
+                pick{i}.ik.opt{k}.qdot(j,:) = Jpinv * pick{i}.ve(j,:)'+qns;
+                pick{i}.ik.opt{k}.q(j+1,:) = pick{i}.ik.opt{k}.q(j,:) + ...
+                    (pick{i}.ik.opt{k}.qdot(j,:) * dt);
+                % Check whether the joints are within the limits or not
+                % check_jlim(robot, task{i}.ik.opt{k}.q(j+1,:));
+            end
             
             % Null space optimization (CLIK)
             delta_k = tr2delta(robot.fkine(pick{i}.clik.opt{k}.q(j,:)), ...
                 pick{i}.TC(:,:,j));
             J = robot.jacob0(pick{i}.clik.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
-            pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
-                pick{i}.clik.opt{k}.q(j,:), constraints, k0);
+%             pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
+%                 pick{i}.clik.opt{k}.q(j,:), constraints);
+%             pick{i}.clik.opt{k}.q0 = k0 * dev_free_opt(robot, opt_name, ...
+%                 pick{i}.clik.opt{k}.q(j,:));
+            pick{i}.clik.opt{k}.q0 = k0 * grad_est(robot, opt_name, ...
+                pick{i}.clik.opt{k}.q(j,:));
+            pick{i}.clik.opt{k}.q0
             qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0';
             pick{i}.clik.opt{k}.qdot(j,:) = Jpinv * (pick{i}.ve(j,:)' + ...
                 pick{i}.clik.opt{k}.K * delta_k) + qns;
