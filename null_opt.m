@@ -1,48 +1,45 @@
-function [ q0_dot ] = null_opt(r, type, q_k, con)
+function [ q0_dot ] = null_opt(r, type, q_k, options)
 %NULL_OPT Returns the q0_dot for null space optimization
 %   Returns the vector of the joint space velocities obtained using the
-%   optimization specified by 'type'
+%   optimization specified by 'type'. 'r' is the SerialLink object
+%   describing the manipulator, 'q_k' is the starting point for the
+%   optimization and 'options' describes the particular optimization method
+%   used.
 
-global dist_grad orient_grad plane_grad q1 q2 q3 q4 q5 q6 q7 q8
+global joint_grad plane_grad q1 q2 q3 q4 q5 q6 q7 q8
 
-% Objective function to be optimized
-if strcmp(type, 'manip')
+%% Objective function to be optimized
+switch type
+
+    case 'manip'
     % Manipolability
-    % obj_f = @(x) -sqrt(det(jacob0(r,x) * jacob0(r,x)'));
     obj_f = @(x) -r.maniplty(x, 'yoshikawa');
     
-elseif strcmp(type, 'joint')
+    case 'joint'
     % Distance from mechanical joint limits
-    j_mid = mean([r.qlim(:,2) r.qlim(:,1)], 2);
-    obj_f = @(x) (1 / (2)) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
+    j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
+    grad = joint_grad;
+    obj_f = @(x) (1 / (2*r.n)) * sumsqr((x' - j_mid) ./ (r.qlim(:,2) - ...
         r.qlim(:,1)));
     
-elseif strcmp(type, 'orient')
+    case 'orient'
     % Orientation with the task object
     obj_f = @(x) obj_f_orient(r, x);
     
-elseif strcmp(type, 'grad_joint')
-    % Distance from mechanical joint limits using gradient
-    j_mid = mean([r.qlim(:,1) r.qlim(:,2)], 2);
-    g = double(subs(dist_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
-    obj_f = @(x) (1 / (2*r.n)) * sumsqr(((q_k - x * g)' - j_mid) ./ ...
-            (r.qlim(:,2) - r.qlim(:,1)));
-        
-elseif strcmp(type, 'grad_orient')
-    % Distance from mechanical joint limits using gradient
-    g = double(subs(orient_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
-    obj_f = @(x) obj_f_orient(r, (q_k - x * g));
-elseif strcmp(type, 'grad_plane')
-    % Distance from mechanical joint limits using gradient
-    g = double(subs(plane_grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'));
-    obj_f = @(x) -dist_plane(r, (q_k - x * g));
-else
+    case 'plane'
+    % Joint distances from the tree plane
+    grad = plane_grad;
+    obj_f = @(x) -dist_plane(r, x);
+    
+    otherwise
     error('Undefined optimization type!');
 end
 
-% Choose between contrained optimization or not
-if strcmp(con, 'yes') 
-    % Old constaints, they consider q0
+%% Check optimization options
+
+if any(contains(options, 'constrained'))
+    % Use joint limits constraints
+    % Old constraints, they consider q0
     lb = r.qlim(:, 1)';
     ub = r.qlim(:, 2)';
     
@@ -50,18 +47,47 @@ if strcmp(con, 'yes')
         'Display', 'off');
     q0_dot = fmincon(obj_f, q_k, [], [], [], [], lb,  ub, [], opt);
     
-elseif strcmp(con, 'no')
+elseif any(contains(options, 'gradient_fminunc'))
+    % Use gradient estimation from fminunc
+    opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
+        'Display', 'off', 'MaxIterations', 1);
+    [~, ~, ~, ~, q0_dot] = fminunc(obj_f, q_k, opt);
+    
+elseif any(contains(options, 'gradient_sym'))
+    % Use symbolic gradient computed by MATLAB
+    g = double(subs(grad,[q1;q2;q3;q4;q5;q6;q7;q8],q_k'))';
+    if any(contains(options, 'exact'))
+        % Exact line search
+        obj_f = @(x) obj_f(q_k - x * g);
+        lb = 0;
+        opt = optimoptions('fmincon', 'Display', 'off');
+        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+        q0_dot = -t * g;
+    else
+        % Constant step size (k0)
+        q0_dot = -g;
+    end
+    
+elseif any(contains(options, 'gradient_est'))
+    % Use numeric gradient estimation
+    g = grad_est(obj_f, q_k);
+    if any(contains(options, 'exact'))
+        % Exact line search
+        obj_f = @(x) obj_f(q_k - x * g);
+        lb = 0;
+        opt = optimoptions('fmincon', 'Display', 'iter');
+        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+        q0_dot = -t * g;
+    else
+        % Constant step size (k0)
+        q0_dot = -g;
+    end
+    
+else
+    % Find the global optimization problem (try to find global optimum)
     opt = optimoptions('fminunc', 'Algorithm', 'quasi-newton', ...
         'Display', 'off');
-    q0_dot = fminunc(obj_f, q_k, opt);
-    
-elseif strcmp(type, 'grad_joint') || strcmp(type, 'grad_orient') || ...
-        strcmp(type, 'grad_plane')
-    lb = 0;
-    opt = optimoptions('fmincon', 'Display', 'off');
-    t = fmincon(obj_f, 10e-3, [], [], [], [], lb,  [], [], opt)
-    q0_dot = -t * g;
-    
+    [q0_dot] = fminunc(obj_f, q_k, opt);
 end
 
 end

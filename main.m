@@ -1,9 +1,13 @@
-%% Initialize the toolbox
+%% Initialize the toolbox and the needed data structures
 close all;
 clearvars;
 startup_rvc;
 
+global D;
+
 load('scatter.mat');
+D = load('search_d.txt');
+
 %% Robot arm configuration
 
 % Arm links
@@ -56,6 +60,9 @@ min_z = min(scatter(:,3));
 max_x = max(scatter(:,1));
 max_y = max(scatter(:,2));
 max_z = max(scatter(:,3));
+
+%% Compute symbolic gradients for optimization phase
+opt_grad;
 
 %% Pick Phase
 % Perform the trajectory planning and inverse kinematics

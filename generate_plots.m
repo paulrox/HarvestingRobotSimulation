@@ -258,6 +258,46 @@ for i = 1 : length(place)
     
 end
 
+%% Trajectory Error Without Cart (ikcon)
+    
+% Pick Phase
+fig = openfig([fig_path 'pick1_traj_pos']);
+hold on;
+
+P = transl(arm.fkine(pick{1}.q_no_cart(:,:)));
+
+plot(P);
+hold off;
+title('Task 1 (6 DoF) - Pick - ikcon Transl. Trajectory Error');
+legend('Ideal x', 'Ideal y', 'Ideal z', 'ikcon x', ...
+    'ikcon y', 'ikcon z');
+xlabel('Time Steps');
+ylabel('Distance [m]');
+savefig(fig, [fig_path 'pick1_trajVsikcon_pos']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [fig_path 'pick1_trajVsikcon_pos'], 'pdf');
+end
+close;
+
+% Plase Phase
+fig = openfig([fig_path 'place1_traj_pos']);
+hold on;
+
+P = transl(arm.fkine(place{1}.q_no_cart(:,:)));
+
+plot(P);
+hold off;
+title('Task 1 (6 DoF) - Place - ikcon Transl. Trajectory Error');
+legend('Ideal x', 'Ideal y', 'Ideal z', 'ikcon x', ...
+    'ikcon y', 'ikcon z');
+xlabel('Time Steps');
+ylabel('Distance [m]');
+savefig(fig, [fig_path 'place1_trajVsikcon_pos']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [fig_path 'place1_trajVsikcon_pos'], 'pdf');
+end
+close;
+
 %% Ellipsoids
 
 % Pick phase initial pose velocity ellipsoid

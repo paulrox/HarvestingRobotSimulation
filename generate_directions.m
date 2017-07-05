@@ -1,14 +1,21 @@
-fprintf('[');
+%% Generate the search directions for gradient estimation
 
-for i=0:1:2^(robot.n)-1
-     bin = dec2bin(i, robot.n);
-   
+file = fopen('search_d.txt', 'w');
+
+row = zeros(1, robot.n);
+
+for i= 1 :  2^(robot.n) - 1
+    bin = dec2bin(i, robot.n);
+    
     for j = 1:robot.n
-       
-        fprintf('%s ', bin(j));
-    end
-        fprintf(';\n');
+        row(j) = str2double(bin(j));
         
+    end
+    % Normalize the direction vector
+    row = row / norm(row);
+    fprintf(file, '%d %d %d %d %d %d %d %d\n', row);
+    fprintf(file, '%d %d %d %d %d %d %d %d\n', -row);
 end
 
-fprintf(']');
+
+fclose(file);

@@ -1,8 +1,5 @@
 %% Pick Phase
 
-% Compute or not optimizations for open-loop IK
-use_ik_opt = 0;
-
 % Tasks definition
 pick = cell(1, 3);
 
@@ -16,7 +13,7 @@ pick{3} = struct;
 N = 200;
 dt = 0.01;
 T0 = robot.fkine(qn);
-num_opt = 1; % Number of optimizations actually in use
+num_opt = 3; % Number of optimizations actually in use
 
 for i = 1 : length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
@@ -72,7 +69,7 @@ end
 
 %% Differential IK and CLIK with null space optimizations
 
-for i = 1 : length(pick)
+for i = 1 : 1 %length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
     disp('Null Space Optimizations');
     for k = 1 : num_opt
@@ -88,65 +85,53 @@ for i = 1 : length(pick)
         qns = zeros(1,8);
         
         switch k
-            case 2
-                opt_name = 'joint';
-                constraints = 'no';
-                k0 = 1;
-                disp('Optimizing distance from mechanical joint limits');
             case 4
-                opt_name = 'grad_joint';
-                constraints = 'ciao';
+                opt_name = 'joint';
+                options = {};
                 k0 = 1;
-                disp('Optimizing joint distance using gradient');
-            case 5
-                opt_name = 'manip';
-                constraints = 'no';
-                k0 = 1;
-                disp('Optimizing manipulability');
-            case 3
-                opt_name  = 'grad_orient';
-                constraints = 'no';
-                k0 = 1;
-                disp('Optimizing orientation using gradient');
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using fminunc']);
             case 1
-                opt_name  = 'grad_plane';
-                constraints = 'no';
+                opt_name = 'plane';
+                options = {'gradient_est', 'exact'};
                 k0 = 1;
-                disp('Optimizing tree plane distance');
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using gradient estimation']);
+            case 6
+                opt_name = 'joint';
+                options = {'gradient_est'};
+                k0 = 1;
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using gradient estimation']);
+            case 3
+                opt_name = 'manip';
+                options = {};
+                k0 = 1;
+                disp('Optimizing manipulability using fmincon');
+            case 2
+                opt_name  = 'manip';
+                options = {'gradient_est'};
+                k0 = 1;
+                disp('Optimizing orientation using gradient estimation');
+            case 5
+                opt_name  = 'manip';
+                options = {'gradient_est', 'exact'};
+                k0 = 1;
+                disp(['Optimizing tree plane distance using gradient ' ...
+                    'estimation']);
             otherwise
-                opt_name  = 'orient';
-                constraints = 'no';
-                k0 = 1;
-                disp('Optimizing orientation with task object');
+                error('Invalid optimization index');
                 
         end
         
-        for j = 1 : (N-1)
-            % Null space optimization (IK)
-            if use_ik_opt
-                J = robot.jacob0(pick{i}.ik.opt{k}.q(j,:));
-                Jpinv = J' * ((J * J')^-1);
-                pick{i}.ik.opt{k}.q0 = k0 * null_opt(robot, ...
-                    opt_name, pick{i}.ik.opt{k}.q(j,:), constraints);
-                qns = (eye(8) - Jpinv * J) * pick{i}.ik.opt{k}.q0';
-                pick{i}.ik.opt{k}.qdot(j,:) = Jpinv * pick{i}.ve(j,:)'+qns;
-                pick{i}.ik.opt{k}.q(j+1,:) = pick{i}.ik.opt{k}.q(j,:) + ...
-                    (pick{i}.ik.opt{k}.qdot(j,:) * dt);
-                % Check whether the joints are within the limits or not
-                % check_jlim(robot, task{i}.ik.opt{k}.q(j+1,:));
-            end
-            
+        for j = 1 : (N-1)    
             % Null space optimization (CLIK)
             delta_k = tr2delta(robot.fkine(pick{i}.clik.opt{k}.q(j,:)), ...
                 pick{i}.TC(:,:,j));
             J = robot.jacob0(pick{i}.clik.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
             pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
-                pick{i}.clik.opt{k}.q(j,:), constraints);
-%             pick{i}.clik.opt{k}.q0 = k0 * dev_free_opt(robot, opt_name, ...
-%                 pick{i}.clik.opt{k}.q(j,:));
-%             pick{i}.clik.opt{k}.q0 = k0 * grad_est(robot, opt_name, ...
-%                 pick{i}.clik.opt{k}.q(j,:));
+                pick{i}.clik.opt{k}.q(j,:), options);
             pick{i}.clik.opt{k}.q0
             qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0';
             pick{i}.clik.opt{k}.qdot(j,:) = Jpinv * (pick{i}.ve(j,:)' + ...
