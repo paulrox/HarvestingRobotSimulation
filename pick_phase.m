@@ -13,7 +13,7 @@ pick{3} = struct;
 N = 200;
 dt = 0.01;
 T0 = robot.fkine(qn);
-num_opt = 3; % Number of optimizations actually in use
+num_opt = 1; % Number of optimizations actually in use
 
 for i = 1 : length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
@@ -76,7 +76,7 @@ for i = 1 : 1 %length(pick)
         pick{i}.ik.opt{k}.q = zeros(N,8);
         pick{i}.ik.opt{k}.q(1,:) = qn;
         pick{i}.ik.opt{k}.qdot = zeros(N-1,8);
-        pick{i}.ik.opt{k}.q0 = zeros(1,8);
+        pick{i}.ik.opt{k}.q0 = zeros(N-1,8);
         pick{i}.clik.opt{k}.q = zeros(N,8);
         pick{i}.clik.opt{k}.q(1,:) = qn;
         pick{i}.clik.opt{k}.qdot = zeros(N-1,8);
@@ -93,7 +93,7 @@ for i = 1 : 1 %length(pick)
                     'limits using fminunc']);
             case 1
                 opt_name = 'plane';
-                options = {'gradient_est', 'exact'};
+                options = {'gradient_est'};
                 k0 = 1;
                 disp(['Optimizing distance from mechanical joint ' ...
                     'limits using gradient estimation']);
@@ -130,10 +130,9 @@ for i = 1 : 1 %length(pick)
                 pick{i}.TC(:,:,j));
             J = robot.jacob0(pick{i}.clik.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
-            pick{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
+            pick{i}.clik.opt{k}.q0(j,:) = k0 * null_opt(robot, opt_name,...
                 pick{i}.clik.opt{k}.q(j,:), options);
-            pick{i}.clik.opt{k}.q0
-            qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0';
+            qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0(j,:)';
             pick{i}.clik.opt{k}.qdot(j,:) = Jpinv * (pick{i}.ve(j,:)' + ...
                 pick{i}.clik.opt{k}.K * delta_k) + qns;
             pick{i}.clik.opt{k}.q(j+1,:) = pick{i}.clik.opt{k}.q(j,:) + ...

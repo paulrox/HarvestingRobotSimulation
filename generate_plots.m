@@ -692,6 +692,41 @@ for i = 1 : length(place)
 
 end
 
+%% Plot the joint positions obtained by q0 for a specific task
+
+q_pos = cell(robot.n,1);
+q_pos{1} = zeros(N-1, 3);
+q_pos{2} = zeros(N-1, 3);
+q_pos{3} = zeros(N-1, 3);
+q_pos{4} = zeros(N-1, 3);
+q_pos{5} = zeros(N-1, 3);
+q_pos{6} = zeros(N-1, 3);
+q_pos{7} = zeros(N-1, 3);
+q_pos{8} = zeros(N-1, 3);
+
+for i = 1 : N-1
+    for j = 1 : robot.n
+        q_pos{j}(i, :) = transl(robot.A(j, ...
+            pick{1}.clik.opt{1}.q0(i,:)));
+    end
+end
+
+fig = figure;
+
+hold on;
+for i = 1 : robot.n
+    scatter3(q_pos{i}(:,1), q_pos{i}(:,2), q_pos{i}(:,3));
+end
+legend('q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8');
+plot_robot(robot, qn, fruit{1}, 'r');
+hold off;
+title('Manip. Optimal Solutions - Task 1 - Pick CLIK');
+savefig(fig, [fig_path 'pick1_manip_sol']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [fig_path 'pick1_manip_sol'], 'pdf');
+end
+close;
+
 %% Workspace Analysis plots
 
 % Cloud of points

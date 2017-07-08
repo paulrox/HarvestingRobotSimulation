@@ -13,7 +13,8 @@ R_fruit = 0.15;
 
 plot_poly(fruit_tree, 'fill', 'g');
 plot_sphere(pos, R_fruit, 'color', color);
-r.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+% r.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7, 'jvec'};
+r.plotopt = {'workspace' [-3 3 -6 4 -4 4] 'scale' 0.7};
 r.plot(q);
 
 end
