@@ -13,7 +13,7 @@ pick{3} = struct;
 N = 200;
 dt = 0.01;
 T0 = robot.fkine(qn);
-num_opt = 1; % Number of optimizations actually in use
+num_opt = 4; % Number of optimizations actually in use
 
 for i = 1 : length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
@@ -67,16 +67,12 @@ for i = 1 : length(pick)
     end
 end
 
-%% Differential IK and CLIK with null space optimizations
+%% Differential CLIK with null space optimizations
 
 for i = 1 : 1 %length(pick)
     disp(['************ TASK ' num2str(i) ' - Pick Phase ************']);
     disp('Null Space Optimizations');
-    for k = 1 : num_opt
-        pick{i}.ik.opt{k}.q = zeros(N,8);
-        pick{i}.ik.opt{k}.q(1,:) = qn;
-        pick{i}.ik.opt{k}.qdot = zeros(N-1,8);
-        pick{i}.ik.opt{k}.q0 = zeros(N-1,8);
+    for k = 1 : 4
         pick{i}.clik.opt{k}.q = zeros(N,8);
         pick{i}.clik.opt{k}.q(1,:) = qn;
         pick{i}.clik.opt{k}.qdot = zeros(N-1,8);
@@ -86,14 +82,14 @@ for i = 1 : 1 %length(pick)
         
         switch k
             case 4
-                opt_name = 'joint';
-                options = {};
+                opt_name = 'plane';
+                options = {'gradient_sym', 'exact'};
                 k0 = 1;
                 disp(['Optimizing distance from mechanical joint ' ...
                     'limits using fminunc']);
-            case 1
-                opt_name = 'plane';
-                options = {'gradient_est'};
+            case 5
+                opt_name = 'manip';
+                options = {};
                 k0 = 1;
                 disp(['Optimizing distance from mechanical joint ' ...
                     'limits using gradient estimation']);
@@ -103,19 +99,19 @@ for i = 1 : 1 %length(pick)
                 k0 = 1;
                 disp(['Optimizing distance from mechanical joint ' ...
                     'limits using gradient estimation']);
-            case 3
-                opt_name = 'manip';
+            case 1
+                opt_name = 'plane';
                 options = {};
                 k0 = 1;
-                disp('Optimizing manipulability using fmincon');
+                disp('Optimizing manipulability using fminunc');
             case 2
-                opt_name  = 'manip';
+                opt_name  = 'plane';
                 options = {'gradient_est'};
                 k0 = 1;
                 disp('Optimizing orientation using gradient estimation');
-            case 5
-                opt_name  = 'manip';
-                options = {'gradient_est', 'exact'};
+            case 3
+                opt_name  = 'plane';
+                options = {'gradient_sym'};
                 k0 = 1;
                 disp(['Optimizing tree plane distance using gradient ' ...
                     'estimation']);
@@ -132,13 +128,14 @@ for i = 1 : 1 %length(pick)
             Jpinv = J' * ((J * J')^-1);
             pick{i}.clik.opt{k}.q0(j,:) = k0 * null_opt(robot, opt_name,...
                 pick{i}.clik.opt{k}.q(j,:), options);
+%           pick{i}.clik.opt{k}.q0(j,:)
             qns = (eye(8) - Jpinv * J) * pick{i}.clik.opt{k}.q0(j,:)';
             pick{i}.clik.opt{k}.qdot(j,:) = Jpinv * (pick{i}.ve(j,:)' + ...
                 pick{i}.clik.opt{k}.K * delta_k) + qns;
             pick{i}.clik.opt{k}.q(j+1,:) = pick{i}.clik.opt{k}.q(j,:) + ...
                 (pick{i}.clik.opt{k}.qdot(j,:) * dt);
             % Check whether the joints are within the limits or not
-            check_jlim(robot, pick{i}.clik.opt{k}.q(j+1,:));
+            % check_jlim(robot, pick{i}.clik.opt{k}.q(j+1,:));
         end
     end
     disp('End of optimization phase');

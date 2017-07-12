@@ -1,8 +1,5 @@
 %% Place Phase
 
-% Compute or not optimizations for open-loop IK
-use_ik_opt = 0;
-
 % Tasks definition
 place = cell(1, 3);
 
@@ -18,7 +15,7 @@ basket = T1(1:3,4);
 
 N = 200;
 dt = 0.01;
-num_opt = 1; % Number of optimizations actually in use
+num_opt = 3; % Number of optimizations actually in use
 
 T1 = robot.fkine(qn);
 
@@ -75,62 +72,73 @@ end
 
 %% Differential IK and CLIK with null space optimizations
 
-for i = 1 : length(place)
+for i = 2 : 2
     disp(['************ TASK ' num2str(i) ' - Place Phase ************']);
     disp('Null Space Optimizations');
-    for k = 1 : num_opt
-        place{i}.ik.opt{k}.q = zeros(N,8);
-        place{i}.ik.opt{k}.q(1,:) = pick{i}.ik.opt{k}.q(end,:);
-        place{i}.ik.opt{k}.qdot = zeros(N-1,8);
-        place{i}.ik.opt{k}.q0 = zeros(1,8);
+    for k = 1 : 3
+        place{i}.clik.opt{k} = struct;
         place{i}.clik.opt{k}.q = zeros(N,8);
-        place{i}.clik.opt{k}.q(1,:) = pick{i}.clik.opt{k}.q(end,:);
+        place{i}.clik.opt{k}.q(1,:) = pick{i}.clik.no_opt.q(end,:);
         place{i}.clik.opt{k}.qdot = zeros(N-1,8);
         place{i}.clik.opt{k}.q0 = zeros(1,8);
         place{i}.clik.opt{k}.K = eye(6);  % Closed-loop gain matrix
         qns = zeros(1,8);
         
         switch k
-            case 1
-                opt_name = 'joint';
-                constraints = 'no';
+            case 4
+                opt_name = 'plane';
+                options = {'gradient_sym', 'exact'};
                 k0 = 1;
-                disp('Optimizing distance from mechanical joint limits');
-            case 2
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using fminunc']);
+            case 5
                 opt_name = 'manip';
-                constraints = 'no';
+                options = {};
                 k0 = 1;
-                disp('Optimizing manipulability');
-            
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using gradient estimation']);
+            case 6
+                opt_name = 'joint';
+                options = {'gradient_est'};
+                k0 = 1;
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using gradient estimation']);
+            case 1
+                opt_name = 'plane';
+                options = {};
+                k0 = 1;
+                disp('Optimizing manipulability using fminunc');
+            case 2
+                opt_name  = 'plane';
+                options = {'gradient_est'};
+                k0 = 1;
+                disp('Optimizing orientation using gradient estimation');
+            case 3
+                opt_name  = 'plane';
+                options = {'gradient_sym'};
+                k0 = 1;
+                disp(['Optimizing tree plane distance using gradient ' ...
+                    'estimation']);
+            otherwise
+                error('Invalid optimization index');
+                
         end
         
-        for j = 1 : (N-1)
-            % Null space optimization (IK)
-            J = robot.jacob0(place{i}.ik.opt{k}.q(j,:));
-            Jpinv = J' * ((J * J')^-1);
-            place{i}.ik.opt{k}.q0 = k0 * null_opt(robot, ...
-                opt_name, place{i}.ik.opt{k}.q(j,:), constraints, k0);
-            qns = (eye(8) - Jpinv * J) * place{i}.ik.opt{k}.q0';
-            place{i}.ik.opt{k}.qdot(j,:) = Jpinv * place{i}.ve(j,:)'+qns;
-            place{i}.ik.opt{k}.q(j+1,:) = place{i}.ik.opt{k}.q(j,:) + ...
-                (place{i}.ik.opt{k}.qdot(j,:) * dt);
-            % Check whether the joints are within the limits or not
-            % check_jlim(robot, pick{i}.ik.opt{k}.q(j+1,:));
-            
+        for j = 1 : (N-1)       
             % Null space optimization (CLIK)
             delta_k = tr2delta(robot.fkine(place{i}.clik.opt{k}.q(j,:)), ...
                 place{i}.TC(:,:,j));
             J = robot.jacob0(place{i}.clik.opt{k}.q(j,:));
             Jpinv = J' * ((J * J')^-1);
             place{i}.clik.opt{k}.q0 = k0 * null_opt(robot, opt_name, ...
-                place{i}.clik.opt{k}.q(j,:), constraints, k0);
+                place{i}.clik.opt{k}.q(j,:), options);
             qns = (eye(8) - Jpinv * J) * place{i}.clik.opt{k}.q0';
             place{i}.clik.opt{k}.qdot(j,:) = Jpinv * (place{i}.ve(j,:)' + ...
                 place{i}.clik.opt{k}.K * delta_k) + qns;
             place{i}.clik.opt{k}.q(j+1,:) = place{i}.clik.opt{k}.q(j,:) + ...
                 (place{i}.clik.opt{k}.qdot(j,:) * dt);
             % Check whether the joints are within the limits or not
-            check_jlim(robot, place{i}.clik.opt{k}.q(j+1,:));
+            % check_jlim(robot, place{i}.clik.opt{k}.q(j+1,:));
         end
     end
     disp('End of optimization phase');
@@ -148,7 +156,3 @@ for i = 2: N
     place{1}.q_no_cart(i,:) = arm.ikcon(TCR(:, :, i), ...
         place{1}.q_no_cart(i-1,:));
 end
-
-%% Plot the robot performing the task
-
-plot_robot(robot, place{1}.ik.opt{1}.q, basket, 'b');

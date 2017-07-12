@@ -61,7 +61,7 @@ elseif any(contains(options, 'gradient_sym'))
         obj_f = @(x) obj_f(q_k - x * g);
         lb = 0;
         opt = optimoptions('fmincon', 'Display', 'off');
-        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt);
         q0_dot = -t * g;
     else
         % Constant step size (k0)
@@ -75,8 +75,8 @@ elseif any(contains(options, 'gradient_est'))
         % Exact line search
         obj_f = @(x) obj_f(q_k - x * g);
         lb = 0;
-        opt = optimoptions('fmincon', 'Display', 'iter');
-        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt)
+        opt = optimoptions('fmincon', 'Display', 'off');
+        t = fmincon(obj_f, 1, [], [], [], [], lb,  [], [], opt);
         q0_dot = -t * g;
     else
         % Constant step size (k0)

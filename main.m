@@ -62,6 +62,7 @@ max_y = max(scatter(:,2));
 max_z = max(scatter(:,3));
 
 %% Compute symbolic gradients for optimization phase
+
 opt_grad;
 
 %% Pick Phase

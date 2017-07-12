@@ -520,24 +520,34 @@ end
 
 %% Manipulability analysis CLIK (Pick)
 
-for i = 1 : length(pick)
+for i = 1 : 1
     
+    man_opt = cell(1,3);
     man_noopt = zeros(1,N);
-    man_opt = zeros(1,N);
     
     % Manipulability comparison no optimization vs. man. optimization
+    for k = 1 : 3
+        man_opt{k} = zeros(1,N);
+        for j = 1 : N
+            man_opt{k}(j) = robot.maniplty(pick{i}.clik.opt{k}.q(j,:));
+        end
+    end
+    
     for j = 1 : N
         man_noopt(j) = robot.maniplty(pick{i}.clik.no_opt.q(j,:));
-        man_opt(j) = robot.maniplty(pick{i}.clik.opt{1}.q(j,:));
-    end 
+    end
     
     fig = figure;
     
     plot(1:N, man_noopt);
     hold on;
-    plot(1:N, man_opt);
+    for k = 1 : 3
+        plot(1:N, man_opt{k});
+    end
     title(['Manipulability - Task ' num2str(i) ' - Pick CLIK']);
-    legend('No opt.', 'Opt.');
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. est. exact');
+    xlabel('Time Step');
+    ylabel('Manipulability value');
     savefig(fig, [fig_path 'pick' num2str(i) '_clik_manip']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'pick' num2str(i) '_clik_manip'], ...
@@ -547,26 +557,36 @@ for i = 1 : length(pick)
     
 end
 
-%% Manipulability analysis (Place)
+%% Manipulability analysis CLIK (Place)
 
-for i = 1 : length(place)
+for i = 2 : 2
     
+    man_opt = cell(1,3);
     man_noopt = zeros(1,N);
-    man_opt = zeros(1,N);
     
     % Manipulability comparison no optimization vs. man. optimization
+    for k = 1 : 3
+        man_opt{k} = zeros(1,N);
+        for j = 1 : N
+            man_opt{k}(j) = robot.maniplty(place{i}.clik.opt{k}.q(j,:));
+        end
+    end
+    
     for j = 1 : N
         man_noopt(j) = robot.maniplty(place{i}.clik.no_opt.q(j,:));
-        man_opt(j) = robot.maniplty(place{i}.clik.opt{2}.q(j,:));
-    end 
+    end
     
     fig = figure;
     
     plot(1:N, man_noopt);
     hold on;
-    plot(1:N, man_opt);
+    for k = 1 : 3
+        plot(1:N, man_opt{k});
+    end
     title(['Manipulability - Task ' num2str(i) ' - Place CLIK']);
-    legend('No opt.', 'Opt.');
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. est. exact');
+    xlabel('Time Step');
+    ylabel('Manipulability value');
     savefig(fig, [fig_path 'place' num2str(i) '_clik_manip']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'place' num2str(i) '_clik_manip'], ...
@@ -578,18 +598,24 @@ end
 
 %% Joint limits plots CLIK (Pick)
 
-for i = 1 : length(pick)
+for i = 1 : 1
     
     j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
     dist_noopt = zeros(1, N);
-    dist_opt = zeros(1, N);
+    dist_opt = cell(1,4);
+    
+    for k = 1 : 4
+        dist_opt{k} = zeros(1, N);
+        for j = 1 : N
+            dist_opt{k}(j) = (1 / (2*robot.n)) * sumsqr( ...
+                (pick{i}.clik.opt{k}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+                robot.qlim(:,1)));
+        end
+    end
     
     for j = 1 : N
         dist_noopt(j) = (1 / (2*robot.n))*sumsqr( ...
             (pick{i}.clik.no_opt.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
-            robot.qlim(:,1)));
-        dist_opt(j) = (1 / (2*robot.n)) * sumsqr( ...
-            (pick{i}.clik.opt{1}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
             robot.qlim(:,1)));
     end
     
@@ -597,10 +623,15 @@ for i = 1 : length(pick)
     
     plot(1:N, dist_noopt);
     hold on;
-    plot(1:N, dist_opt);
+    for k = 1 : 4
+        plot(1:N, dist_opt{k});
+    end
     hold off;
     title(['Joint Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
-    legend('No opt.', 'Opt.');
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. sym', ...
+        'Grad. sym exact');
+    xlabel('Time Step');
+    ylabel('Squared medium distance [m]')
     savefig(fig, [fig_path 'pick' num2str(i) '_clik_dist']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'pick' num2str(i) '_clik_dist'], 'pdf');
@@ -611,18 +642,24 @@ end
 
 %% Joint limits plots CLIK (Place)
 
-for i = 1 : length(place)
+for i = 2 : 2
     
     j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
     dist_noopt = zeros(1, N);
-    dist_opt = zeros(1, N);
+    dist_opt = cell(1,3);
+    
+    for k = 1 : 4
+        dist_opt{k} = zeros(1, N);
+        for j = 1 : N
+            dist_opt{k}(j) = (1 / (2*robot.n)) * sumsqr( ...
+                (place{i}.clik.opt{k}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
+                robot.qlim(:,1)));
+        end
+    end
     
     for j = 1 : N
         dist_noopt(j) = (1 / (2*robot.n))*sumsqr( ...
             (place{i}.clik.no_opt.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
-            robot.qlim(:,1)));
-        dist_opt(j) = (1 / (2*robot.n)) * sumsqr( ...
-            (place{i}.clik.opt{1}.q(j,:)' - j_mid) ./ (robot.qlim(:,2) - ...
             robot.qlim(:,1)));
     end
     
@@ -630,10 +667,15 @@ for i = 1 : length(place)
     
     plot(1:N, dist_noopt);
     hold on;
-    plot(1:N, dist_opt);
+    for k = 1 : 4
+        plot(1:N, dist_opt{k});
+    end
     hold off;
     title(['Joint Medium Distance - Task ' num2str(i) ' - Place CLIK']);
-    legend('No opt.', 'Opt.');
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. sym', ...
+        'Grad. sym exact');
+    xlabel('Time Step');
+    ylabel('Squared medium distance [m]')
     savefig(fig, [fig_path 'place' num2str(i) '_clik_dist']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'place' num2str(i) '_clik_dist'], 'pdf');
@@ -644,21 +686,34 @@ end
 
 %% Plane distance plots CLIK (Pick)
 
-for i = 1 : length(pick)
+for i = 1 : 1
+    
+    dist_opt = cell(1,4);
+    dist_noopt = zeros(1, N);
+    for k = 1 : 4
+        dist_opt{k} = zeros(1, N);
+        for j = 1 : N
+            dist_opt{k}(j) = dist_plane(robot, pick{i}.clik.opt{k}.q(j,:));
+        end
+    end
       
     for j = 1 : N
         dist_noopt(j) = dist_plane(robot, pick{i}.clik.no_opt.q(j,:));
-        dist_opt(j) = dist_plane(robot, pick{i}.clik.opt{1}.q(j,:));
     end
     
     fig = figure;
     
     plot(1:N, dist_noopt);
     hold on;
-    plot(1:N, dist_opt);
+    for k = 1 : 4
+        plot(1:N, dist_opt{k});
+    end
     hold off;
     title(['Plane Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
-    legend('No opt.', 'Opt.');
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. sym', ...
+        'Grad. sym exact');
+    xlabel('Time Step');
+    ylabel('Squared medium distance [m]')
     savefig(fig, [fig_path 'pick' num2str(i) '_clik_plane']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'pick' num2str(i) '_clik_plane'], 'pdf');
@@ -669,21 +724,34 @@ end
 
 %% Plane distance plots CLIK (Place)
 
-for i = 1 : length(place)
+for i = 2 : 2
+    
+    dist_opt = cell(1,4);
+    dist_noopt = zeros(1, N);
+    for k = 1 : 4
+        dist_opt{k} = zeros(1, N);
+        for j = 1 : N
+            dist_opt{k}(j) = dist_plane(robot, place{i}.clik.opt{k}.q(j,:));
+        end
+    end
       
     for j = 1 : N
         dist_noopt(j) = dist_plane(robot, place{i}.clik.no_opt.q(j,:));
-        dist_opt(j) = dist_plane(robot, place{i}.clik.opt{1}.q(j,:));
     end
     
     fig = figure;
     
     plot(1:N, dist_noopt);
     hold on;
-    plot(1:N, dist_opt);
+    for k = 1 : 4
+        plot(1:N, dist_opt{k});
+    end
     hold off;
-    title(['Plane Medium Distance - Task ' num2str(i) ' - Pick CLIK']);
-    legend('No opt.', 'Opt.');
+    title(['Plane Medium Distance - Task ' num2str(i) ' - Place CLIK']);
+    legend('No opt.', 'fminunc', 'Grad. est.', 'Grad. sym', ...
+        'Grad. sym exact');
+    xlabel('Time Step');
+    ylabel('Squared medium distance [m]')
     savefig(fig, [fig_path 'place' num2str(i) '_clik_plane']);
     if strcmp(gen_pdf, 'yes')
         saveas(fig, [fig_path 'place' num2str(i) '_clik_plane'], 'pdf');
@@ -721,6 +789,31 @@ legend('q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8');
 plot_robot(robot, qn, fruit{1}, 'r');
 hold off;
 title('Manip. Optimal Solutions - Task 1 - Pick CLIK');
+savefig(fig, [fig_path 'pick1_manip_sol']);
+if strcmp(gen_pdf, 'yes')
+    saveas(fig, [fig_path 'pick1_manip_sol'], 'pdf');
+end
+close;
+
+%% Plot a specific joint configuration with the robot
+
+q_pos = zeros(robot.n, 3);
+
+for j = 1 : robot.n
+    q_pos(j, :) = transl(robot.A(j, ...
+        pick{1}.clik.opt{1}.q0(100,:)));
+end
+
+fig = figure;
+
+hold on;
+for i = 1 : robot.n
+    scatter3(q_pos(i,1), q_pos(i,2), q_pos(i,3), '*');
+end
+legend('q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8');
+plot_robot(robot, qn, fruit{1}, 'r');
+hold off;
+title('Joint Distance Optimal Solution - Task 1 - Pick CLIK');
 savefig(fig, [fig_path 'pick1_manip_sol']);
 if strcmp(gen_pdf, 'yes')
     saveas(fig, [fig_path 'pick1_manip_sol'], 'pdf');
