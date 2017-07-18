@@ -15,8 +15,6 @@ basket = T1(1:3,4);
 
 N = 200;
 dt = 0.01;
-num_opt = 3; % Number of optimizations actually in use
-
 T1 = robot.fkine(qn);
 
 for i = 1 : length(place)
@@ -72,10 +70,15 @@ end
 
 %% Differential IK and CLIK with null space optimizations
 
-for i = 2 : 2
+for i = 1 : length(place)
     disp(['************ TASK ' num2str(i) ' - Place Phase ************']);
     disp('Null Space Optimizations');
-    for k = 1 : 3
+    
+    % The number of optimizations to be performed is expressed by the
+    % number 'k' of loop iterations. The specific optimizations are
+    % specified inside the switch block and the parameters can be checked
+    % in the 'null_opt.m' file.
+    for k = 1 : 2
         place{i}.clik.opt{k} = struct;
         place{i}.clik.opt{k}.q = zeros(N,8);
         place{i}.clik.opt{k}.q(1,:) = pick{i}.clik.no_opt.q(end,:);
@@ -85,40 +88,18 @@ for i = 2 : 2
         qns = zeros(1,8);
         
         switch k
-            case 4
-                opt_name = 'plane';
-                options = {'gradient_sym', 'exact'};
+            case 1
+                opt_name = 'dist';
+                options = {};
                 k0 = 1;
                 disp(['Optimizing distance from mechanical joint ' ...
                     'limits using fminunc']);
-            case 5
-                opt_name = 'manip';
-                options = {};
-                k0 = 1;
-                disp(['Optimizing distance from mechanical joint ' ...
-                    'limits using gradient estimation']);
-            case 6
-                opt_name = 'joint';
-                options = {'gradient_est'};
-                k0 = 1;
-                disp(['Optimizing distance from mechanical joint ' ...
-                    'limits using gradient estimation']);
-            case 1
-                opt_name = 'plane';
-                options = {};
-                k0 = 1;
-                disp('Optimizing manipulability using fminunc');
             case 2
-                opt_name  = 'plane';
+                opt_name = 'dist';
                 options = {'gradient_est'};
                 k0 = 1;
-                disp('Optimizing orientation using gradient estimation');
-            case 3
-                opt_name  = 'plane';
-                options = {'gradient_sym'};
-                k0 = 1;
-                disp(['Optimizing tree plane distance using gradient ' ...
-                    'estimation']);
+                disp(['Optimizing distance from mechanical joint ' ...
+                    'limits using gradient estimation']);
             otherwise
                 error('Invalid optimization index');
                 

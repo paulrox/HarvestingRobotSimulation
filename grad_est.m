@@ -1,9 +1,10 @@
 function [ grad ] = grad_est( obj_f, q_k )
-%grad_est Summary of this function goes here
-%   Detailed explanation goes here
+%grad_est Numerical gradient estimation usign pseudo-derivative free method
 
 global D;
 
+% Step size. This value can be changed in order to improve the gradient
+% estimation.
 tk = 1;
 
 numBasis = length(D);

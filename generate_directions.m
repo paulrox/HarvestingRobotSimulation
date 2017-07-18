@@ -17,5 +17,4 @@ for i= 1 :  2^(robot.n) - 1
     fprintf(file, '%d %d %d %d %d %d %d %d\n', -row);
 end
 
-
 fclose(file);

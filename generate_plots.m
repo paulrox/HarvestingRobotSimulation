@@ -279,7 +279,7 @@ if strcmp(gen_pdf, 'yes')
 end
 close;
 
-% Plase Phase
+% Place Phase
 fig = openfig([fig_path 'place1_traj_pos']);
 hold on;
 
@@ -379,154 +379,17 @@ for i = 1 : length(place)
         saveas(fig, [fig_path 'ellips_place' num2str(i) '_rot'], 'pdf');
     end
     close;
-
-end
-
-
-%% Joint trajectories (Pick Phase)
-
-for i = 1 : length(pick)
-    
-    % IK no optimization
-    fig = qplot_8dof(pick{i}.ik.no_opt.q);
-    
-    title(['Task ' num2str(i) ' - Pick IK - No Opt. Joint Space Motion']);
-    savefig(fig, [fig_path 'pick' num2str(i) '_ik_noopt_q']);
-    if strcmp(gen_pdf, 'yes')
-        saveas(fig, [fig_path 'pick' num2str(i) '_ik_noopt_q'], 'pdf');
-    end
-    close;
-    
-    % CLIK no optimization
-    fig = qplot_8dof(pick{i}.clik.no_opt.q);
-    
-    title(['Task ' num2str(i) ...
-        ' -  Pick CLIK - No Opt. Joint Space Motion']);
-    savefig(fig, [fig_path 'pick' num2str(i) '_clik_noopt_q']);
-    if strcmp(gen_pdf, 'yes')
-        saveas(fig, [fig_path 'pick' num2str(i) '_clik_noopt_q'], 'pdf');
-    end
-    close;
-    
-    % Optimizations
-    for j = 1 : num_opt
-        switch j
-            case 1
-                type = 'Manipulability';
-                stype = 'manip';
-            case 2
-                type = 'Joint Limits';
-                stype = 'jlim';
-            otherwise
-                type = 'Orientation';
-                stype = 'orient';
-        end
-        
-        % IK with optimization
-        fig = qplot_8dof(pick{i}.ik.opt{j}.q);
-        
-        title(['Task ' num2str(i) ' Pick IK - ' type ...
-            ' Opt. Joint Space Motion']);
-        savefig(fig, [fig_path 'pick' num2str(i) '_ik_' stype '_q']);
-        if strcmp(gen_pdf, 'yes')
-            saveas(fig, [fig_path 'pick' num2str(i) '_ik_' stype '_q'], 'pdf');
-        end
-        close;
-        
-        % CLIK with optimization
-        fig = qplot_8dof(pick{i}.clik.opt{j}.q);
-        
-        title(['Task ' num2str(i) ' CLIK - ' type ' Opt. Joint Space ' ...
-            'Motion']);
-        savefig(fig, [fig_path 'pick' num2str(i) '_clik_' stype '_q']);
-        if strcmp(gen_pdf, 'yes')
-            saveas(fig, [fig_path 'pick' num2str(i) '_clik_' stype '_q'], ...
-                'pdf');
-        end
-        close;
-        
-    end
-   
-    
-end
-
-%% Joint trajectories (Place Phase)
-
-for i = 1 : length(place)
-    
-    % IK no optimization
-    fig = qplot_8dof(place{i}.ik.no_opt.q);
-    
-    title(['Task ' num2str(i) ' - Place IK - No Opt. Joint Space Motion']);
-    savefig(fig, [fig_path 'place' num2str(i) '_ik_noopt_q']);
-    if strcmp(gen_pdf, 'yes')
-        saveas(fig, [fig_path 'place' num2str(i) '_ik_noopt_q'], 'pdf');
-    end
-    close;
-    
-    % CLIK no optimization
-    fig = qplot_8dof(place{i}.clik.no_opt.q);
-    
-    title(['Task ' num2str(i) ...
-        ' - Place CLIK - No Opt. Joint Space Motion']);
-    savefig(fig, [fig_path 'place' num2str(i) '_clik_noopt_q']);
-    if strcmp(gen_pdf, 'yes')
-        saveas(fig, [fig_path 'place' num2str(i) '_clik_noopt_q'], 'pdf');
-    end
-    close;
-    
-    % Optimizations
-    for j = 1 : num_opt
-        switch j
-            case 1
-                type = 'Manipulability';
-                stype = 'manip';
-            case 2
-                type = 'Joint Limits';
-                stype = 'jlim';
-            otherwise
-                type = 'Orientation';
-                stype = 'orient';
-        end
-        
-        % IK with optimization
-        fig = qplot_8dof(place{i}.ik.opt{j}.q);
-        
-        title(['Task ' num2str(i) ' - Place IK - ' type ...
-            ' Opt. Joint Space Motion']);
-        savefig(fig, [fig_path 'place' num2str(i) '_ik_' stype '_q']);
-        if strcmp(gen_pdf, 'yes')
-            saveas(fig, [fig_path 'place' num2str(i) '_ik_' stype '_q'], ...
-                'pdf');
-        end
-        close;
-        
-        % CLIK with optimization
-        fig = qplot_8dof(place{i}.clik.opt{j}.q);
-        
-        title(['Task ' num2str(i) ' - Place CLIK - ' type ...
-            ' Opt. Joint Space Motion']);
-        savefig(fig, [fig_path 'place' num2str(i) '_clik_' stype '_q']);
-        if strcmp(gen_pdf, 'yes')
-            saveas(fig, [fig_path 'place' num2str(i) '_clik_' stype '_q'], ...
-                'pdf');
-        end
-        close;
-        
-    end
-   
-    
 end
 
 %% Manipulability analysis CLIK (Pick)
 
-for i = 1 : 1
+for i = 1 : length(pick)
     
     man_opt = cell(1,3);
     man_noopt = zeros(1,N);
     
-    % Manipulability comparison no optimization vs. man. optimization
-    for k = 1 : 3
+    % Actual number of active optimizations
+    for k = 1 : 2
         man_opt{k} = zeros(1,N);
         for j = 1 : N
             man_opt{k}(j) = robot.maniplty(pick{i}.clik.opt{k}.q(j,:));
@@ -541,7 +404,8 @@ for i = 1 : 1
     
     plot(1:N, man_noopt);
     hold on;
-    for k = 1 : 3
+    % Actual number of active optimizations
+    for k = 1 : 2
         plot(1:N, man_opt{k});
     end
     title(['Manipulability - Task ' num2str(i) ' - Pick CLIK']);
@@ -559,13 +423,13 @@ end
 
 %% Manipulability analysis CLIK (Place)
 
-for i = 2 : 2
+for i = 1 : length(place)
     
     man_opt = cell(1,3);
     man_noopt = zeros(1,N);
     
-    % Manipulability comparison no optimization vs. man. optimization
-    for k = 1 : 3
+    % Actual number of active optimizations
+    for k = 1 : 2
         man_opt{k} = zeros(1,N);
         for j = 1 : N
             man_opt{k}(j) = robot.maniplty(place{i}.clik.opt{k}.q(j,:));
@@ -580,7 +444,8 @@ for i = 2 : 2
     
     plot(1:N, man_noopt);
     hold on;
-    for k = 1 : 3
+    % Actual number of active optimizations
+    for k = 1 : 2
         plot(1:N, man_opt{k});
     end
     title(['Manipulability - Task ' num2str(i) ' - Place CLIK']);
@@ -598,13 +463,13 @@ end
 
 %% Joint limits plots CLIK (Pick)
 
-for i = 1 : 1
+for i = 1 : length(pick)
     
     j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
     dist_noopt = zeros(1, N);
     dist_opt = cell(1,4);
-    
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         dist_opt{k} = zeros(1, N);
         for j = 1 : N
             dist_opt{k}(j) = (1 / (2*robot.n)) * sumsqr( ...
@@ -623,7 +488,8 @@ for i = 1 : 1
     
     plot(1:N, dist_noopt);
     hold on;
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         plot(1:N, dist_opt{k});
     end
     hold off;
@@ -642,13 +508,14 @@ end
 
 %% Joint limits plots CLIK (Place)
 
-for i = 2 : 2
+for i = 1 : length(place)
     
     j_mid = mean([robot.qlim(:,1) robot.qlim(:,2)], 2);
     dist_noopt = zeros(1, N);
     dist_opt = cell(1,3);
     
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         dist_opt{k} = zeros(1, N);
         for j = 1 : N
             dist_opt{k}(j) = (1 / (2*robot.n)) * sumsqr( ...
@@ -667,7 +534,8 @@ for i = 2 : 2
     
     plot(1:N, dist_noopt);
     hold on;
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         plot(1:N, dist_opt{k});
     end
     hold off;
@@ -686,11 +554,12 @@ end
 
 %% Plane distance plots CLIK (Pick)
 
-for i = 1 : 1
+for i = 1 : length(pick)
     
     dist_opt = cell(1,4);
     dist_noopt = zeros(1, N);
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         dist_opt{k} = zeros(1, N);
         for j = 1 : N
             dist_opt{k}(j) = dist_plane(robot, pick{i}.clik.opt{k}.q(j,:));
@@ -705,7 +574,8 @@ for i = 1 : 1
     
     plot(1:N, dist_noopt);
     hold on;
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         plot(1:N, dist_opt{k});
     end
     hold off;
@@ -724,11 +594,12 @@ end
 
 %% Plane distance plots CLIK (Place)
 
-for i = 2 : 2
+for i = 1 : length(place)
     
     dist_opt = cell(1,4);
     dist_noopt = zeros(1, N);
-    for k = 1 : 4
+    % Actual number of active optimizations
+    for k = 1 : 2
         dist_opt{k} = zeros(1, N);
         for j = 1 : N
             dist_opt{k}(j) = dist_plane(robot, place{i}.clik.opt{k}.q(j,:));
@@ -743,7 +614,7 @@ for i = 2 : 2
     
     plot(1:N, dist_noopt);
     hold on;
-    for k = 1 : 4
+    for k = 1 : 2
         plot(1:N, dist_opt{k});
     end
     hold off;
